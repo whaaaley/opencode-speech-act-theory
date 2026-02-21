@@ -1,12 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "theme": "opencode",
+  "plugin": ["opencode-irf"],
   "permission": {
     "bash": {
       "*": "ask"
     }
   },
-  "instructions": [
-    "instructions/*.md"
-  ]
+  "instructions": ["instructions/*.md"]
 }

@@ -2,22 +2,6 @@
   "name": "opencode-irf",
   "version": "0.0.1",
   "description": "OpenCode plugin that converts unstructured instructions into structured rules using speech act theory and deontic logic.",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target node --external @opencode-ai/plugin --external zod",
-    "prepublishOnly": "bun run build"
-  },
   "keywords": [
     "opencode",
     "plugin",
@@ -27,20 +11,37 @@
     "speech-act-theory",
     "deontic-logic"
   ],
-  "author": "Dustin Whalen",
-  "license": "MIT",
+  "homepage": "https://github.com/whaaaley/irf#readme",
+  "bugs": {
+    "url": "https://github.com/whaaaley/irf/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/whaaaley/irf.git"
   },
-  "bugs": {
-    "url": "https://github.com/whaaaley/irf/issues"
+  "license": "MIT",
+  "author": "Dustin Whalen",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
-  "homepage": "https://github.com/whaaaley/irf#readme",
-  "peerDependencies": {
-    "@opencode-ai/plugin": ">=1.0.0"
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --external @opencode-ai/plugin --external zod",
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "zod": "^4.1.8"
+  },
+  "devDependencies": {},
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=1.0.0"
   }
 }
