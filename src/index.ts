@@ -5,7 +5,7 @@ import type { InstructionFile } from './discover.ts'
 import { buildTable, type ComparisonResult } from './utils/compare.ts'
 import { detectModel, promptWithRetry } from './session.ts'
 import { safeAsync } from './utils/safe.ts'
-import { processFile, type FileResult } from './process.ts'
+import { type FileResult, processFile } from './process.ts'
 import { isFormatMode } from './prompt.ts'
 
 const ERROR_LABELS: Record<Exclude<FileResult['status'], 'success'>, string> = {

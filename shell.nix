@@ -3,6 +3,7 @@ let
   nixpkgs = import tarball {};
 in with nixpkgs; mkShell {
   buildInputs = [
+    bun
     deno
     nodejs_24
   ];
