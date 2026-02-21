@@ -1,6 +1,6 @@
 import { glob, readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
-import { type Result, safe, safeAsync } from './utils/safe.ts'
+import { type Result, safe, safeAsync } from './utils/safe'
 
 export type InstructionFile = {
   path: string

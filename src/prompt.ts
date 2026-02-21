@@ -1,4 +1,4 @@
-import { parseSchemaExample } from './schema.ts'
+import { parseSchemaExample } from './schema'
 
 export type FormatMode = 'verbose' | 'balanced' | 'concise'
 

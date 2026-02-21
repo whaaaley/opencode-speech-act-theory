@@ -1,12 +1,12 @@
 import { writeFile } from 'node:fs/promises'
 import { basename } from 'node:path'
 import type { z } from 'zod'
-import type { InstructionFile } from './discover.ts'
-import { buildFormatPrompt, buildParsePrompt, type FormatMode } from './prompt.ts'
-import { FormatResponseSchema, ParseResponseSchema } from './schema.ts'
-import { compareBytes, type ComparisonResult } from './utils/compare.ts'
-import type { Result } from './utils/safe.ts'
-import { safeAsync } from './utils/safe.ts'
+import type { InstructionFile } from './discover'
+import { buildFormatPrompt, buildParsePrompt, type FormatMode } from './prompt'
+import { FormatResponseSchema, ParseResponseSchema } from './schema'
+import { compareBytes, type ComparisonResult } from './utils/compare'
+import type { Result } from './utils/safe'
+import { safeAsync } from './utils/safe'
 
 type FileResultSuccess = {
   status: 'success'

@@ -1,13 +1,13 @@
 import type { Plugin } from '@opencode-ai/plugin'
 import { tool } from '@opencode-ai/plugin'
-import { discover, readFilePaths } from './discover.ts'
-import type { InstructionFile } from './discover.ts'
-import { type FileResult, processFile, type PromptFn } from './process.ts'
-import { isFormatMode } from './prompt.ts'
-import { detectModel, promptWithRetry } from './session.ts'
-import { buildTable, type ComparisonResult } from './utils/compare.ts'
-import type { Result } from './utils/safe.ts'
-import { safeAsync } from './utils/safe.ts'
+import { discover, readFilePaths } from './src/discover'
+import type { InstructionFile } from './src/discover'
+import { type FileResult, processFile, type PromptFn } from './src/process'
+import { isFormatMode } from './src/prompt'
+import { detectModel, promptWithRetry } from './src/session'
+import { buildTable, type ComparisonResult } from './src/utils/compare'
+import type { Result } from './src/utils/safe'
+import { safeAsync } from './src/utils/safe'
 
 // resolve instruction files from explicit paths or opencode.json discovery
 const resolveFiles = async (directory: string, filesArg?: string): Promise<Result<InstructionFile[]>> => {
@@ -52,7 +52,7 @@ const appendComparisonTable = (lines: string[], comparisons: ComparisonResult[])
 }
 
 // deno-lint-ignore require-await
-export const IRFPlugin: Plugin = async ({ directory, client }) => {
+const plugin: Plugin = async ({ directory, client }) => {
   return {
     tool: {
       'irf-rewrite': tool({
@@ -151,3 +151,5 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
     },
   }
 }
+
+export default plugin

@@ -1,10 +1,10 @@
 import type { PluginInput } from '@opencode-ai/plugin'
 import type { z } from 'zod'
-import { buildRetryPrompt } from './prompt.ts'
-import { extractLlmError, type MessageInfo } from './utils/extractLlmError.ts'
-import type { Result } from './utils/safe.ts'
-import { stripCodeFences } from './utils/stripCodeFences.ts'
-import { formatValidationError, validateJson } from './utils/validate.ts'
+import { buildRetryPrompt } from './prompt'
+import { extractLlmError, type MessageInfo } from './utils/extractLlmError'
+import type { Result } from './utils/safe'
+import { stripCodeFences } from './utils/stripCodeFences'
+import { formatValidationError, validateJson } from './utils/validate'
 
 const MAX_RETRIES = 3
 
