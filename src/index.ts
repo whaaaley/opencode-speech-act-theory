@@ -15,6 +15,7 @@ const ERROR_LABELS: Record<Exclude<FileResult['status'], 'success'>, string> = {
   writeError: 'Write failed',
 }
 
+// deno-lint-ignore require-await
 export const IRFPlugin: Plugin = async ({ directory, client }) => {
   return {
     tool: {

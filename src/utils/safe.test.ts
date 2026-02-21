@@ -77,6 +77,7 @@ describe('safeAsync', () => {
   })
 
   it('returns error when async function throws', async () => {
+    // deno-lint-ignore require-await
     const result = await safeAsync(async () => {
       throw new Error('thrown in async')
     })

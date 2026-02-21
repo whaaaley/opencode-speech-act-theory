@@ -46,5 +46,11 @@ Reason: To reduce nesting and improve readability by handling edge cases first.
 Rule: Avoid ternaries, especially chained ternaries, unless used for simple const or object assignment.
 Reason: To keep conditional logic readable and explicit.
 
+Rule: Do not split function parameters across multiple lines.
+Reason: To keep function signatures compact and scannable on a single line.
+
+Rule: When an object literal or function has three or more fields or parameters, split onto multiple lines.
+Reason: One or two fields on a single line is fine, but three or more becomes hard to scan and should be expanded for readability.
+
 Rule: When working through a todo list, complete the easiest tasks first.
 Reason: To build momentum and reduce list size quickly before tackling complex items.

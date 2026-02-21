@@ -27,11 +27,7 @@ export type FileResult = FileResultSuccess | FileResultError
 export type PromptFn = <T>(prompt: string, schema: z.ZodType<T>) => Promise<Result<T>>
 
 // process a single instruction file through the parse -> format -> write pipeline
-export const processFile = async (
-  file: InstructionFile,
-  prompt: PromptFn,
-  mode: FormatMode = 'balanced',
-): Promise<FileResult> => {
+export const processFile = async (file: InstructionFile, prompt: PromptFn, mode: FormatMode = 'balanced'): Promise<FileResult> => {
   // skip files that failed to read
   if (file.error) {
     return { status: 'readError', path: file.path, error: file.error }

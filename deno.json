@@ -19,5 +19,5 @@
     "semiColons": false,
     "singleQuote": true
   },
-  "exclude": [".zed", "fixtures", "README.md"]
+  "exclude": [".zed", "instructions", "fixtures", "README.md"]
 }

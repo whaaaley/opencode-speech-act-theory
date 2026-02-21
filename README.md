@@ -4,7 +4,7 @@ An OpenCode plugin that converts unstructured instruction text into structured, 
 
 ## Disclaimer
 
-I'm not an NLP expert — I did some research to learn a bit more theory on NLP and stumbled onto speech act theory and deontic logic and thought it could be a good fit for instructions.
+I'm not an NLP expert. I did some research to learn a bit more theory on NLP and stumbled onto speech act theory and deontic logic and thought it could be a good fit for instructions.
 I was annoyed trying to write consistent rules, thinking about phrasing and grammar, so I thought there might be a better way to approach this systematically.
 This project is just me experimenting with these concepts to see if they can help structure and standardize instruction text.
 The implementation may not perfectly align with academic definitions, but the goal is practical utility in organizing rule-based content.

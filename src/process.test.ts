@@ -15,12 +15,12 @@ const makePromptFn = (
   formatError: string | null,
 ): PromptFn => {
   let call = 0
-  return (async () => {
+  return (() => {
     call++
     if (call === 1) {
-      return parseError !== null ? { data: null, error: parseError } : { data: parseData, error: null }
+      return Promise.resolve(parseError !== null ? { data: null, error: parseError } : { data: parseData, error: null })
     }
-    return formatError !== null ? { data: null, error: formatError } : { data: formatData, error: null }
+    return Promise.resolve(formatError !== null ? { data: null, error: formatError } : { data: formatData, error: null })
   }) as PromptFn
 }
 
@@ -45,13 +45,13 @@ const makeCapturingPromptFn = (
   captured: string[],
 ): PromptFn => {
   let call = 0
-  return (async (text: string) => {
+  return ((text: string) => {
     captured.push(text)
     call++
     if (call === 1) {
-      return { data: parseData, error: null }
+      return Promise.resolve({ data: parseData, error: null })
     }
-    return { data: formatData, error: null }
+    return Promise.resolve({ data: formatData, error: null })
   }) as PromptFn
 }
 
