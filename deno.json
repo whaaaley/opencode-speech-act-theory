@@ -3,7 +3,7 @@
   "name": "opencode-irf",
   "version": "0.0.1",
   "exports": "./src/index.ts",
-  "repository": "https://github.com/whaaaley/irf",
+  "repository": "https://github.com/whaaaley/opencode-irf",
   "description": "OpenCode plugin that converts unstructured instructions into structured rules using speech act theory and deontic logic.",
   "tasks": {
     "test": "deno test --allow-read --allow-env --allow-write",

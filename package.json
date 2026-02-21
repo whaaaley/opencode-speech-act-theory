@@ -1,6 +1,6 @@
 {
   "name": "opencode-irf",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "OpenCode plugin that converts unstructured instructions into structured rules using speech act theory and deontic logic.",
   "keywords": [
     "opencode",
@@ -12,16 +12,16 @@
     "speech-act-theory",
     "deontic-logic"
   ],
-  "homepage": "https://github.com/whaaaley/irf#readme",
+  "homepage": "https://github.com/whaaaley/opencode-irf#readme",
   "bugs": {
-    "url": "https://github.com/whaaaley/irf/issues"
+    "url": "https://github.com/whaaaley/opencode-irf/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/whaaaley/irf.git"
+    "url": "git+https://github.com/whaaaley/opencode-irf.git"
   },
   "license": "MIT",
-  "author": "Dustin Whalen",
+  "author": "Dustin Dowell",
   "type": "module",
   "exports": {
     ".": {
