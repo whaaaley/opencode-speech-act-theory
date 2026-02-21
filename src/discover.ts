@@ -1,10 +1,11 @@
 import { glob, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { safeAsync } from './utils/safe.util.ts'
+import { safe, safeAsync } from './utils/safe.ts'
 
 export type InstructionFile = {
   path: string
   content: string
+  error?: string
 }
 
 type DiscoverSuccess = {
@@ -19,7 +20,19 @@ type DiscoverError = {
 
 type DiscoverResult = DiscoverSuccess | DiscoverError
 
-const readConfig = async (directory: string) => {
+type ConfigSuccess = {
+  data: string[]
+  error: null
+}
+
+type ConfigError = {
+  data: null
+  error: string
+}
+
+type ConfigResult = ConfigSuccess | ConfigError
+
+const readConfig = async (directory: string): Promise<ConfigResult> => {
   const configPath = join(directory, 'opencode.json')
   const { data, error } = await safeAsync(() => readFile(configPath, 'utf-8'))
   if (error || !data) {
@@ -29,7 +42,14 @@ const readConfig = async (directory: string) => {
     }
   }
 
-  const parsed = JSON.parse(data)
+  const { data: parsed, error: parseError } = safe(() => JSON.parse(data))
+  if (parseError) {
+    return {
+      data: null,
+      error: 'Invalid JSON in ' + configPath + ': ' + parseError.message,
+    }
+  }
+
   const instructions = parsed.instructions
   if (!instructions || !Array.isArray(instructions) || instructions.length === 0) {
     return {
@@ -38,8 +58,16 @@ const readConfig = async (directory: string) => {
     }
   }
 
+  const patterns = instructions.filter((entry: unknown) => typeof entry === 'string')
+  if (patterns.length === 0) {
+    return {
+      data: null,
+      error: 'No valid string patterns in "instructions" in ' + configPath,
+    }
+  }
+
   return {
-    data: instructions as string[],
+    data: patterns,
     error: null,
   }
 }
@@ -69,7 +97,8 @@ const readFiles = async (files: string[]) => {
     if (error) {
       results.push({
         path: file,
-        content: '**Error reading file: ' + error.message + '**',
+        content: '',
+        error: error.message,
       })
     } else {
       results.push({

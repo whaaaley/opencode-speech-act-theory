@@ -1,19 +1,15 @@
 {
-  "name": "instruction-rule-format",
+  "name": "opencode-irf",
   "version": "0.0.1",
-  "repository": "https://github.com/whaaaley/instruction-rule-format",
-  "description": "A tool that converts unstructured instruction text into structured, parseable rules using AI, grounded in speech act theory and deontic logic.",
+  "exports": "./src/index.ts",
+  "repository": "https://github.com/whaaaley/irf",
+  "description": "OpenCode plugin that converts unstructured instructions into structured rules using speech act theory and deontic logic.",
   "tasks": {
-    "test": "deno test --allow-read --allow-env",
-    "link": "npm_config_prefix=$HOME/.npm-global npm_config_global_prefix=$HOME/.npm-global npm link"
+    "test": "deno test --allow-read --allow-env --allow-write"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@^1.0.13",
-    "@std/cli": "jsr:@std/cli@^1.0.21",
-    "@std/fs": "jsr:@std/fs@^1.0.19",
-    "@std/path": "jsr:@std/path@^1.1.1",
     "@std/testing": "jsr:@std/testing@^1.0.15",
-    "fast-glob": "npm:fast-glob@^3.3.3",
     "@opencode-ai/plugin": "npm:@opencode-ai/plugin@*",
     "zod": "npm:zod@^4.0.14"
   },

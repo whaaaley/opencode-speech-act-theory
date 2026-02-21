@@ -1,52 +1,126 @@
 import type { Plugin } from '@opencode-ai/plugin'
 import { tool } from '@opencode-ai/plugin'
-import { z } from 'zod'
-import { ParsedRuleSchema, RuleSchema } from './schema.ts'
-import { formatValidationError, validateJson } from './utils/validate.util.ts'
+import { basename } from 'node:path'
+import { writeFile } from 'node:fs/promises'
+import { discover } from './discover.ts'
+import { compareBytes, type ComparisonResult, buildTable } from './compare.ts'
+import { ParseResponseSchema, FormatResponseSchema } from './schema.ts'
+import { buildFormatPrompt, buildParsePrompt } from './prompt.ts'
+import { detectModel, promptWithRetry } from './session.ts'
+import { safeAsync } from './utils/safe.ts'
 
-const ParsedRulesOutput = z.object({
-  rules: z.array(ParsedRuleSchema),
-})
-
-const RulesOutput = z.object({
-  rules: z.array(RuleSchema),
-})
-
-export const IRFPlugin: Plugin = async () => {
+export const IRFPlugin: Plugin = async ({ directory, client }) => {
   return {
     tool: {
-      'irf-parse': tool({
-        description:
-          'Parse unstructured instruction text into structured rules. Takes raw instruction text and returns a JSON object with a "rules" array. Each rule has: strength (obligatory/permissible/forbidden/optional/supererogatory/indifferent/omissible), action (verb), target (object), context (optional, conditions), and reason (justification). Return ONLY valid JSON matching this schema.',
-        args: {
-          instructions: tool.schema.string().describe('The raw instruction text to parse into structured rules'),
-          output: tool.schema.string().describe(
-            'Your parsed rules as a JSON string: {"rules": [{"strength": "obligatory", "action": "use", "target": "...", "context": "...", "reason": "..."}]}',
-          ),
-        },
-        async execute(args) {
-          const result = validateJson(args.output, ParsedRulesOutput)
-          if (result.error) {
-            return formatValidationError(result)
-          }
+      'irf-rewrite': tool({
+        description: 'Discover instruction files from opencode.json, parse them into structured rules, format them into human-readable rules, and write the formatted rules back to the original files.',
+        args: {},
+        async execute(_args, context) {
+          try {
+            // discover instruction files
+            const discovered = await discover(directory)
+            if (discovered.error || !discovered.data) {
+              return discovered.error || 'No instruction files found'
+            }
 
-          return '**Parsed rules validated successfully**\n\n' + args.output
-        },
-      }),
-      'irf-format': tool({
-        description:
-          'Format structured parsed rules into human-readable natural language rules. Takes parsed rules JSON and returns a JSON object with a "rules" array of strings. Each string should be a clear, concise, actionable rule. Return ONLY valid JSON.',
-        args: {
-          parsed_rules: tool.schema.string().describe('The parsed rules JSON from irf-parse'),
-          output: tool.schema.string().describe('Your formatted rules as a JSON string: {"rules": ["Rule text 1", "Rule text 2"]}'),
-        },
-        async execute(args) {
-          const result = validateJson(args.output, RulesOutput)
-          if (result.error) {
-            return formatValidationError(result)
-          }
+            // detect model from current session
+            const model = await detectModel(client, context.sessionID)
+            if (!model) {
+              return 'Could not detect current model. Send a message first, then call irf-rewrite.'
+            }
 
-          return '**Formatted rules validated successfully**\n\n' + args.output
+            const files = discovered.data
+            const results: string[] = []
+            const comparisons: ComparisonResult[] = []
+
+            // create a session for internal LLM calls
+            const sessionResult = await client.session.create({
+              body: {
+                title: 'IRF Parse',
+              },
+            })
+            if (!sessionResult.data) {
+              return 'Failed to create internal session'
+            }
+            const sessionId = sessionResult.data.id
+
+            for (const file of files) {
+              // bail if the tool call was cancelled
+              if (context.abort.aborted) {
+                results.push('Cancelled')
+                break
+              }
+
+              // skip files that failed to read
+              if (file.error) {
+                results.push('**' + file.path + '**: Read failed — ' + file.error)
+                continue
+              }
+
+              // step 1: parse instruction text -> structured rules
+              const parsePrompt = buildParsePrompt(file.content)
+              const parseResult = await promptWithRetry(
+                client,
+                sessionId,
+                parsePrompt,
+                ParseResponseSchema,
+                model,
+              )
+
+              if (parseResult.error || !parseResult.data) {
+                results.push('**' + file.path + '**: Parse failed — ' + (parseResult.error || 'no data'))
+                continue
+              }
+
+              const parsedJson = JSON.stringify(parseResult.data)
+
+              // step 2: format structured rules -> human-readable rules
+              const formatPrompt = buildFormatPrompt(parsedJson)
+              const formatResult = await promptWithRetry(
+                client,
+                sessionId,
+                formatPrompt,
+                FormatResponseSchema,
+                model,
+              )
+
+              if (formatResult.error || !formatResult.data) {
+                results.push('**' + file.path + '**: Format failed — ' + (formatResult.error || 'no data'))
+                continue
+              }
+
+              // step 3: write formatted rules back to original file
+              const formattedRules = formatResult.data.rules
+              const content = formattedRules.join('\n\n') + '\n'
+              const { error: writeError } = await safeAsync(() => writeFile(file.path, content, 'utf-8'))
+              if (writeError) {
+                results.push('**' + file.path + '**: Write failed — ' + writeError.message)
+                continue
+              }
+
+              const comparison = compareBytes(basename(file.path), file.content, content)
+              comparisons.push(comparison)
+              results.push('**' + file.path + '**: ' + formattedRules.length + ' rules written')
+            }
+
+            // clean up the internal session
+            await safeAsync(() => client.session.delete({
+              path: { id: sessionId },
+            }))
+
+            // build comparison table
+            if (comparisons.length > 0) {
+              results.push('')
+              results.push('```')
+              results.push(buildTable(comparisons))
+              results.push('```')
+            }
+
+            return results.join('\n')
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err)
+            return 'irf-rewrite error: ' + msg
+          }
         },
       }),
     },

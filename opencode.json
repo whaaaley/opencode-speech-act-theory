@@ -5,5 +5,8 @@
     "bash": {
       "*": "ask"
     }
-  }
+  },
+  "instructions": [
+    "fixtures/*.md"
+  ]
 }

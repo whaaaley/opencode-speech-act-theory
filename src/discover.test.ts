@@ -1,12 +1,15 @@
-import { assertEquals } from '@std/assert'
-import { describe, it } from '@std/testing/bdd'
+import { assertEquals, assertNotEquals } from '@std/assert'
+import { afterEach, describe, it } from '@std/testing/bdd'
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { discover } from './discover.ts'
 
+let tmpDir = ''
+
 const makeTmpDir = async () => {
-  return await mkdtemp(join(tmpdir(), 'irf-discover-'))
+  tmpDir = await mkdtemp(join(tmpdir(), 'irf-discover-'))
+  return tmpDir
 }
 
 const writeConfig = async (dir: string, config: Record<string, unknown>) => {
@@ -21,15 +24,20 @@ const writeInstruction = async (dir: string, relativePath: string, content: stri
 }
 
 describe('discover', () => {
+  afterEach(async () => {
+    if (tmpDir) {
+      await rm(tmpDir, { recursive: true, force: true })
+      tmpDir = ''
+    }
+  })
+
   it('returns error when opencode.json is missing', async () => {
     const dir = await makeTmpDir()
     const result = await discover(dir)
 
     assertEquals(result.data, null)
-    assertEquals(typeof result.error, 'string')
-    assertEquals(result.error!.includes('Could not read'), true)
-
-    await rm(dir, { recursive: true })
+    assertNotEquals(result.error, null)
+    assertEquals(result.error !== null && result.error.includes('Could not read'), true)
   })
 
   it('returns error when instructions array is missing', async () => {
@@ -38,9 +46,8 @@ describe('discover', () => {
     const result = await discover(dir)
 
     assertEquals(result.data, null)
-    assertEquals(result.error!.includes('No "instructions" array'), true)
-
-    await rm(dir, { recursive: true })
+    assertNotEquals(result.error, null)
+    assertEquals(result.error !== null && result.error.includes('No "instructions" array'), true)
   })
 
   it('returns error when instructions array is empty', async () => {
@@ -49,9 +56,8 @@ describe('discover', () => {
     const result = await discover(dir)
 
     assertEquals(result.data, null)
-    assertEquals(result.error!.includes('No "instructions" array'), true)
-
-    await rm(dir, { recursive: true })
+    assertNotEquals(result.error, null)
+    assertEquals(result.error !== null && result.error.includes('No "instructions" array'), true)
   })
 
   it('returns error when no files match patterns', async () => {
@@ -60,9 +66,8 @@ describe('discover', () => {
     const result = await discover(dir)
 
     assertEquals(result.data, null)
-    assertEquals(result.error!.includes('No instruction files found matching'), true)
-
-    await rm(dir, { recursive: true })
+    assertNotEquals(result.error, null)
+    assertEquals(result.error !== null && result.error.includes('No instruction files found matching'), true)
   })
 
   it('discovers files matching a single glob pattern', async () => {
@@ -72,11 +77,10 @@ describe('discover', () => {
     const result = await discover(dir)
 
     assertEquals(result.error, null)
-    assertEquals(result.data!.length, 1)
-    assertEquals(result.data![0].path, join(dir, 'docs/rules.md'))
-    assertEquals(result.data![0].content, 'rule content')
-
-    await rm(dir, { recursive: true })
+    assertNotEquals(result.data, null)
+    assertEquals(result.data !== null && result.data.length, 1)
+    assertEquals(result.data !== null && result.data[0].path, join(dir, 'docs/rules.md'))
+    assertEquals(result.data !== null && result.data[0].content, 'rule content')
   })
 
   it('discovers files matching multiple glob patterns', async () => {
@@ -87,13 +91,14 @@ describe('discover', () => {
     const result = await discover(dir)
 
     assertEquals(result.error, null)
-    assertEquals(result.data!.length, 2)
+    assertNotEquals(result.data, null)
+    assertEquals(result.data !== null && result.data.length, 2)
 
-    const paths = result.data!.map((f) => f.path)
-    assertEquals(paths.includes(join(dir, 'docs/a.md')), true)
-    assertEquals(paths.includes(join(dir, 'agents/b.md')), true)
-
-    await rm(dir, { recursive: true })
+    if (result.data) {
+      const paths = result.data.map((f) => f.path)
+      assertEquals(paths.includes(join(dir, 'docs/a.md')), true)
+      assertEquals(paths.includes(join(dir, 'agents/b.md')), true)
+    }
   })
 
   it('deduplicates files matched by overlapping patterns', async () => {
@@ -103,9 +108,8 @@ describe('discover', () => {
     const result = await discover(dir)
 
     assertEquals(result.error, null)
-    assertEquals(result.data!.length, 1)
-
-    await rm(dir, { recursive: true })
+    assertNotEquals(result.data, null)
+    assertEquals(result.data !== null && result.data.length, 1)
   })
 
   it('reads file content correctly', async () => {
@@ -116,9 +120,8 @@ describe('discover', () => {
     const result = await discover(dir)
 
     assertEquals(result.error, null)
-    assertEquals(result.data![0].content, content)
-
-    await rm(dir, { recursive: true })
+    assertNotEquals(result.data, null)
+    assertEquals(result.data !== null && result.data[0].content, content)
   })
 
   it('returns error content for unreadable files', async () => {
@@ -130,11 +133,36 @@ describe('discover', () => {
     const result = await discover(dir)
 
     assertEquals(result.error, null)
-    assertEquals(result.data!.length, 2)
+    assertNotEquals(result.data, null)
+    assertEquals(result.data !== null && result.data.length, 2)
 
-    const bad = result.data!.find((f) => f.path.includes('bad.md'))
-    assertEquals(bad!.content.includes('**Error reading file:'), true)
+    if (result.data) {
+      const bad = result.data.find((f) => f.path.includes('bad.md'))
+      assertNotEquals(bad, undefined)
+      assertEquals(bad !== undefined && bad.error !== undefined, true)
+      assertEquals(bad !== undefined && bad.content, '')
+    }
+  })
 
-    await rm(dir, { recursive: true })
+  it('returns error for invalid JSON in opencode.json', async () => {
+    const dir = await makeTmpDir()
+    await writeFile(join(dir, 'opencode.json'), 'not valid json', 'utf-8')
+    const result = await discover(dir)
+
+    assertEquals(result.data, null)
+    assertNotEquals(result.error, null)
+    assertEquals(result.error !== null && result.error.includes('Invalid JSON'), true)
+  })
+
+  it('filters out non-string entries in instructions', async () => {
+    const dir = await makeTmpDir()
+    await writeConfig(dir, { instructions: ['docs/*.md', 42, null, 'agents/*.md'] })
+    await writeInstruction(dir, 'docs/a.md', 'alpha')
+    await writeInstruction(dir, 'agents/b.md', 'beta')
+    const result = await discover(dir)
+
+    assertEquals(result.error, null)
+    assertNotEquals(result.data, null)
+    assertEquals(result.data !== null && result.data.length, 2)
   })
 })

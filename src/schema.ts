@@ -38,11 +38,13 @@ export const RuleSchema = z.string()
 export const ParsedSchema = z.array(ParsedRuleSchema)
   .describe('Array of parsed rules')
 
+export const ParseResponseSchema = z.object({
+  rules: ParsedSchema,
+})
+
+export const FormatResponseSchema = z.object({
+  rules: z.array(RuleSchema),
+})
+
 export type Strength = z.infer<typeof StrengthSchema>
-export type Action = z.infer<typeof ActionSchema>
-export type Target = z.infer<typeof TargetSchema>
-export type Context = z.infer<typeof ContextSchema>
-export type Reason = z.infer<typeof ReasonSchema>
 export type ParsedRule = z.infer<typeof ParsedRuleSchema>
-export type ParsedRules = z.infer<typeof ParsedSchema>
-export type Rule = z.infer<typeof RuleSchema>
