@@ -2,6 +2,10 @@ import { parseSchemaExample } from './schema.ts'
 
 export type FormatMode = 'verbose' | 'balanced' | 'concise'
 
+export const FORMAT_MODES: FormatMode[] = ['verbose', 'balanced', 'concise']
+
+export const isFormatMode = (v: unknown): v is FormatMode => typeof v === 'string' && FORMAT_MODES.includes(v as FormatMode)
+
 export const buildParsePrompt = (input: string): string => {
   const instructions = [
     'You are a rule parser that converts raw instructions into structured parsed rules.',

@@ -8,7 +8,6 @@ in with nixpkgs; mkShell {
   ];
 
   shellHook = ''
-    echo "🚀 Starting development environment..."
-    export COMPOSE_PROJECT_NAME="irf"
+    echo "Starting development environment..."
   '';
 }

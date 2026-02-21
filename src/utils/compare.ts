@@ -22,11 +22,18 @@ export const compareBytes = (file: string, original: string, generated: string):
   }
 }
 
+// format a percent change string with direction indicator
+const formatChange = (difference: number, percentChange: number): string => {
+  if (difference > 0) {
+    return '\u2212' + percentChange.toFixed(1) + '%'
+  }
+  return '+' + Math.abs(percentChange).toFixed(1) + '%'
+}
+
 // format a single comparison result as a table row
 // uses ASCII indicators (+/-) for consistent monospace alignment
 export const formatRow = (result: ComparisonResult): string => {
-  const saved = result.difference > 0
-  const changeStr = saved ? '\u2212' + result.percentChange.toFixed(1) + '%' : '+' + Math.abs(result.percentChange).toFixed(1) + '%'
+  const changeStr = formatChange(result.difference, result.percentChange)
 
   return (
     result.file.padEnd(25) +
@@ -37,8 +44,15 @@ export const formatRow = (result: ComparisonResult): string => {
   )
 }
 
+export type ComparisonSummary = {
+  totalOriginal: number
+  totalGenerated: number
+  totalDifference: number
+  totalPercentChange: number
+}
+
 // summarize an array of comparison results into totals
-export const summarize = (results: ComparisonResult[]) => {
+export const summarize = (results: ComparisonResult[]): ComparisonSummary => {
   const totalOriginal = results.reduce((sum, r) => sum + r.originalBytes, 0)
   const totalGenerated = results.reduce((sum, r) => sum + r.generatedBytes, 0)
   const totalDifference = totalOriginal - totalGenerated
@@ -73,8 +87,7 @@ export const buildTable = (results: ComparisonResult[]): string => {
   const totals = summarize(results)
 
   lines.push(separator)
-  const totalSaved = totals.totalDifference > 0
-  const totalChangeStr = totalSaved ? '\u2212' + totals.totalPercentChange.toFixed(1) + '%' : '+' + Math.abs(totals.totalPercentChange).toFixed(1) + '%'
+  const totalChangeStr = formatChange(totals.totalDifference, totals.totalPercentChange)
   lines.push(
     'TOTAL'.padEnd(25) +
       totals.totalOriginal.toString().padStart(10) +
@@ -84,7 +97,7 @@ export const buildTable = (results: ComparisonResult[]): string => {
   )
   lines.push('')
   lines.push(
-    (totalSaved ? 'SAVED ' : 'INCREASED ') +
+    (totals.totalDifference > 0 ? 'SAVED ' : 'INCREASED ') +
       Math.abs(totals.totalDifference) + ' bytes (' +
       Math.abs(totals.totalPercentChange).toFixed(1) + '%)',
   )

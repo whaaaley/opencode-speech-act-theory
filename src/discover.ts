@@ -14,10 +14,10 @@ type ConfigResult = Result<string[]>
 const readConfig = async (directory: string): Promise<ConfigResult> => {
   const configPath = join(directory, 'opencode.json')
   const { data, error } = await safeAsync(() => readFile(configPath, 'utf-8'))
-  if (error || !data) {
+  if (error) {
     return {
       data: null,
-      error: 'Could not read ' + configPath + ': ' + (error ? error.message : 'empty file'),
+      error: 'Could not read ' + configPath + ': ' + error.message,
     }
   }
 
@@ -98,10 +98,10 @@ export const readFilePaths = async (directory: string, paths: string[]): Promise
 
 export const discover = async (directory: string): Promise<DiscoverResult> => {
   const config = await readConfig(directory)
-  if (config.error !== null || !config.data) {
+  if (config.error !== null) {
     return {
       data: null,
-      error: config.error || 'No instructions found',
+      error: config.error,
     }
   }
 

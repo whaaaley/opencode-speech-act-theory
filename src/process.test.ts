@@ -1,12 +1,13 @@
-import { assertEquals, assertStringIncludes } from '@std/assert'
+import { assert, assertEquals, assertStringIncludes } from '@std/assert'
 import { describe, it } from '@std/testing/bdd'
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { processFile, type PromptFn } from './process.ts'
 import type { InstructionFile } from './discover.ts'
-import type { FormatMode } from './prompt.ts'
 
 // helper: build a prompt fn that returns parse then format results in order
+// cast is necessary because PromptFn is universally generic (<T>) but test mocks
+// return canned data for specific types — no way to satisfy the generic without it
 const makePromptFn = (
   parseData: { rules: { strength: string; action: string; target: string; reason: string }[] } | null,
   parseError: string | null,
@@ -37,6 +38,7 @@ const sampleFormatted = {
 }
 
 // helper: build a prompt fn that captures prompt strings and returns canned results
+// same cast justification as makePromptFn above
 const makeCapturingPromptFn = (
   parseData: { rules: { strength: string; action: string; target: string; reason: string }[] },
   formatData: { rules: string[] },
@@ -60,9 +62,10 @@ describe('processFile', () => {
 
     const result = await processFile(file, prompt)
 
-    assertStringIncludes(result.message, 'Read failed')
-    assertStringIncludes(result.message, 'ENOENT')
-    assertEquals(result.comparison, undefined)
+    assertEquals(result.status, 'readError')
+    assertEquals(result.path, '/tmp/bad.md')
+    assert(result.status !== 'success', 'expected error result')
+    assertEquals(result.error, 'ENOENT')
   })
 
   it('returns parse error when first prompt fails', async () => {
@@ -71,8 +74,9 @@ describe('processFile', () => {
 
     const result = await processFile(file, prompt)
 
-    assertStringIncludes(result.message, 'Parse failed')
-    assertStringIncludes(result.message, 'LLM timeout')
+    assertEquals(result.status, 'parseError')
+    assert(result.status !== 'success', 'expected error result')
+    assertStringIncludes(result.error, 'LLM timeout')
   })
 
   it('returns format error when second prompt fails', async () => {
@@ -81,8 +85,9 @@ describe('processFile', () => {
 
     const result = await processFile(file, prompt)
 
-    assertStringIncludes(result.message, 'Format failed')
-    assertStringIncludes(result.message, 'schema mismatch')
+    assertEquals(result.status, 'formatError')
+    assert(result.status !== 'success', 'expected error result')
+    assertStringIncludes(result.error, 'schema mismatch')
   })
 
   it('returns write error for invalid path', async () => {
@@ -91,7 +96,9 @@ describe('processFile', () => {
 
     const result = await processFile(file, prompt)
 
-    assertStringIncludes(result.message, 'Write failed')
+    assertEquals(result.status, 'writeError')
+    assert(result.status !== 'success', 'expected error result')
+    assertStringIncludes(result.error, 'ENOENT')
   })
 
   it('writes formatted rules and returns comparison on success', async () => {
@@ -105,9 +112,10 @@ describe('processFile', () => {
 
     const result = await processFile(file, prompt)
 
-    assertStringIncludes(result.message, '1 rules written')
-    assertEquals(result.comparison !== undefined, true)
-    assertEquals(result.comparison!.file, 'rules.md')
+    assertEquals(result.status, 'success')
+    assert(result.status === 'success', 'expected success result')
+    assertEquals(result.rulesCount, 1)
+    assertEquals(result.comparison.file, 'rules.md')
 
     // verify file was actually written with correct content
     const written = await readFile(filePath, 'utf-8')
@@ -133,7 +141,9 @@ describe('processFile', () => {
 
     const result = await processFile(file, prompt)
 
-    assertStringIncludes(result.message, '2 rules written')
+    assertEquals(result.status, 'success')
+    assert(result.status === 'success', 'expected success result')
+    assertEquals(result.rulesCount, 2)
 
     const written = await readFile(filePath, 'utf-8')
     assertEquals(written, 'Rule: Use arrow functions\nReason: consistency\n\nRule: Prefer const\nReason: immutability\n')
@@ -158,7 +168,9 @@ describe('processFile', () => {
 
     const result = await processFile(file, prompt, 'concise')
 
-    assertStringIncludes(result.message, '2 rules written')
+    assertEquals(result.status, 'success')
+    assert(result.status === 'success', 'expected success result')
+    assertEquals(result.rulesCount, 2)
 
     const written = await readFile(filePath, 'utf-8')
     assertEquals(written, '- Use arrow functions for consistency.\n- Prefer const over let.\n')
@@ -172,7 +184,7 @@ describe('processFile', () => {
 
     const result = await processFile(file, prompt)
 
-    assertStringIncludes(result.message, '/some/project/.cursor/rules.md')
+    assertEquals(result.path, '/some/project/.cursor/rules.md')
   })
 
   it('comparison reflects byte difference between original and generated', async () => {
@@ -187,11 +199,12 @@ describe('processFile', () => {
 
     const result = await processFile(file, prompt)
 
-    assertEquals(result.comparison !== undefined, true)
-    assertEquals(result.comparison!.originalBytes, 100)
+    assertEquals(result.status, 'success')
+    assert(result.status === 'success', 'expected success result')
+    assertEquals(result.comparison.originalBytes, 100)
     // "Rule: Short\nReason: Brief\n" = 26 bytes
-    assertEquals(result.comparison!.generatedBytes, 26)
-    assertEquals(result.comparison!.difference, 74)
+    assertEquals(result.comparison.generatedBytes, 26)
+    assertEquals(result.comparison.difference, 74)
 
     await Deno.remove(dir, { recursive: true })
   })

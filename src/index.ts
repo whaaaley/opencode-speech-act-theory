@@ -2,13 +2,18 @@ import type { Plugin } from '@opencode-ai/plugin'
 import { tool } from '@opencode-ai/plugin'
 import { discover, readFilePaths } from './discover.ts'
 import type { InstructionFile } from './discover.ts'
-import { buildTable, type ComparisonResult } from './compare.ts'
+import { buildTable, type ComparisonResult } from './utils/compare.ts'
 import { detectModel, promptWithRetry } from './session.ts'
 import { safeAsync } from './utils/safe.ts'
-import { processFile } from './process.ts'
-import type { FormatMode } from './prompt.ts'
+import { processFile, type FileResult } from './process.ts'
+import { isFormatMode } from './prompt.ts'
 
-const FORMAT_MODES: FormatMode[] = ['verbose', 'balanced', 'concise']
+const ERROR_LABELS: Record<Exclude<FileResult['status'], 'success'>, string> = {
+  readError: 'Read failed',
+  parseError: 'Parse failed',
+  formatError: 'Format failed',
+  writeError: 'Write failed',
+}
 
 export const IRFPlugin: Plugin = async ({ directory, client }) => {
   return {
@@ -22,7 +27,7 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
         },
         async execute(args, context) {
           // validate mode argument
-          const mode: FormatMode = (args.mode && FORMAT_MODES.includes(args.mode as FormatMode)) ? args.mode as FormatMode : 'balanced'
+          const mode = isFormatMode(args.mode) ? args.mode : 'balanced'
           try {
             // resolve files: explicit paths or discovery
             let files: InstructionFile[]
@@ -34,8 +39,8 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
               files = await readFilePaths(directory, paths)
             } else {
               const discovered = await discover(directory)
-              if (discovered.error !== null || !discovered.data) {
-                return discovered.error || 'No instruction files found'
+              if (discovered.error !== null) {
+                return discovered.error
               }
               files = discovered.data
             }
@@ -58,7 +63,7 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
             const sessionId = sessionResult.data.id
 
             // close over session details so processFile only needs a prompt callback
-            const prompt: Parameters<typeof processFile>[1] = (text, schema) => promptWithRetry(client, sessionId, text, schema, model)
+            const prompt: Parameters<typeof processFile>[1] = (text, schema) => promptWithRetry({ client, sessionId, initialPrompt: text, schema, model })
 
             // process files sequentially — parallel prompting through a shared
             // session may cause ordering issues depending on SDK behavior
@@ -73,9 +78,11 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
               }
 
               const fileResult = await processFile(file, prompt, mode)
-              results.push(fileResult.message)
-              if (fileResult.comparison) {
+              if (fileResult.status === 'success') {
+                results.push('**' + fileResult.path + '**: ' + fileResult.rulesCount + ' rules written')
                 comparisons.push(fileResult.comparison)
+              } else {
+                results.push('**' + fileResult.path + '**: ' + ERROR_LABELS[fileResult.status] + ' - ' + fileResult.error)
               }
             }
 
@@ -89,9 +96,12 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
             // build comparison table
             if (comparisons.length > 0) {
               results.push('')
+              results.push('## Comparison')
               results.push('```')
               results.push(buildTable(comparisons))
               results.push('```')
+              results.push('')
+              results.push('IMPORTANT: Show the comparison table above to the user exactly as-is.')
             }
 
             return results.join('\n')

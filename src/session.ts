@@ -13,8 +13,6 @@ export type PromptModel = {
   modelID: string
 }
 
-export type PromptResult<T> = Result<T>
-
 // SDK types — local workarounds until the SDK exports proper types
 type Part = {
   type: string
@@ -26,6 +24,14 @@ type MessageEntry = {
   parts: Part[]
 }
 
+// runtime type guards for untyped SDK responses
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
+const isPart = (v: unknown): v is Part => isRecord(v) && typeof v.type === 'string'
+const isPartArray = (v: unknown): v is Part[] => Array.isArray(v) && v.every(isPart)
+const isMessageInfo = (v: unknown): v is MessageInfo => isRecord(v) && typeof v.role === 'string'
+const isMessageEntry = (v: unknown): v is MessageEntry => isRecord(v) && isMessageInfo(v.info) && isPartArray(v.parts)
+const isMessageEntryArray = (v: unknown): v is MessageEntry[] => Array.isArray(v) && v.every(isMessageEntry)
+
 // extract text content from response parts
 export const extractText = (parts: Part[]): string => {
   return parts
@@ -35,10 +41,7 @@ export const extractText = (parts: Part[]): string => {
 }
 
 // detect model from the calling session's most recent assistant message
-export const detectModel = async (
-  client: PluginInput['client'],
-  sessionId: string,
-): Promise<PromptModel | null> => {
+export const detectModel = async (client: PluginInput['client'], sessionId: string): Promise<PromptModel | null> => {
   const messagesResult = await client.session.messages({
     path: { id: sessionId },
   })
@@ -46,8 +49,10 @@ export const detectModel = async (
     return null
   }
 
-  // SDK returns untyped array — shape validated by role/providerID/modelID checks below
-  const messages = messagesResult.data as MessageEntry[]
+  const messages = messagesResult.data
+  if (!isMessageEntryArray(messages)) {
+    return null
+  }
   for (let i = messages.length - 1; i >= 0; i--) {
     const info = messages[i].info
     if (info.role === 'assistant' && info.providerID && info.modelID) {
@@ -61,14 +66,17 @@ export const detectModel = async (
   return null
 }
 
+type PromptWithRetryOptions<T> = {
+  client: PluginInput['client']
+  sessionId: string
+  initialPrompt: string
+  schema: z.ZodType<T>
+  model: PromptModel
+}
+
 // prompt the LLM and validate the response, retrying on failure
-export const promptWithRetry = async <T>(
-  client: PluginInput['client'],
-  sessionId: string,
-  initialPrompt: string,
-  schema: z.ZodType<T>,
-  model: PromptModel,
-): Promise<PromptResult<T>> => {
+export const promptWithRetry = async <T>(options: PromptWithRetryOptions<T>): Promise<Result<T>> => {
+  const { client, sessionId, initialPrompt, schema, model } = options
   let prompt = initialPrompt
   let lastError = ''
 
@@ -90,8 +98,13 @@ export const promptWithRetry = async <T>(
       }
     }
 
-    // SDK returns untyped info — shape validated by extractLlmError null checks
-    const info = response.data.info as MessageInfo
+    const info = response.data.info
+    if (!isMessageInfo(info)) {
+      return {
+        data: null,
+        error: 'Unexpected response shape: missing info (attempt ' + (attempt + 1) + ')',
+      }
+    }
     const llmError = extractLlmError(info)
     if (llmError) {
       return {
@@ -100,8 +113,16 @@ export const promptWithRetry = async <T>(
       }
     }
 
+    const parts = response.data.parts
+    if (!isPartArray(parts)) {
+      return {
+        data: null,
+        error: 'Unexpected response shape: missing parts (attempt ' + (attempt + 1) + ')',
+      }
+    }
+
     // empty text is a model issue — retryable
-    const text = extractText(response.data.parts as Part[])
+    const text = extractText(parts)
     if (!text) {
       lastError = 'Empty response'
       prompt = buildRetryPrompt('Empty response. Return valid JSON.')

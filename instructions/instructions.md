@@ -33,3 +33,18 @@ Reason: To verify values before accessing them using narrowing type guards inste
 
 Rule: Avoid excessive optional chaining.
 Reason: To ensure deliberate null/undefined checks using explicit guards and conditions so access patterns are clear and intentional.
+
+Rule: Avoid em dashes in general.
+Reason: To maintain consistent, simple punctuation across all written content.
+
+Rule: Use consistent whitespace for readability.
+Reason: Whitespace is critical for readability and inconsistent spacing makes code harder to scan.
+
+Rule: Prefer early returns over if-else statements.
+Reason: To reduce nesting and improve readability by handling edge cases first.
+
+Rule: Avoid ternaries, especially chained ternaries, unless used for simple const or object assignment.
+Reason: To keep conditional logic readable and explicit.
+
+Rule: When working through a todo list, complete the easiest tasks first.
+Reason: To build momentum and reduce list size quickly before tackling complex items.

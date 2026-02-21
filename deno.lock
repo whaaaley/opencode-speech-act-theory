@@ -1,20 +1,20 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@std/assert@^1.0.13": "1.0.18",
-    "jsr:@std/assert@^1.0.17": "1.0.18",
+    "jsr:@std/assert@^1.0.13": "1.0.19",
+    "jsr:@std/assert@^1.0.17": "1.0.19",
     "jsr:@std/async@^1.1.0": "1.1.1",
     "jsr:@std/data-structures@^1.0.10": "1.0.10",
     "jsr:@std/fs@^1.0.22": "1.0.22",
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/path@^1.1.4": "1.1.4",
     "jsr:@std/testing@^1.0.15": "1.0.17",
-    "npm:@opencode-ai/plugin@*": "1.1.59",
-    "npm:zod@^4.0.14": "4.1.8"
+    "npm:@opencode-ai/plugin@*": "1.2.10",
+    "npm:zod@^4.3.6": "4.3.6"
   },
   "jsr": {
-    "@std/assert@1.0.18": {
-      "integrity": "270245e9c2c13b446286de475131dc688ca9abcd94fc5db41d43a219b34d1c78",
+    "@std/assert@1.0.19": {
+      "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
       "dependencies": [
         "jsr:@std/internal"
       ]
@@ -53,18 +53,21 @@
     }
   },
   "npm": {
-    "@opencode-ai/plugin@1.1.59": {
-      "integrity": "sha512-2h/SoyS/OvRYxpT2L0xIil2DnLY7qP+RCnQYz5yZEZNkp4d5f1U2rHhktrpC4hbPahDo7wJRON3W564YflOJ9w==",
+    "@opencode-ai/plugin@1.2.10": {
+      "integrity": "sha512-Z1BMqNHnD8AGAEb+kUz0b2SOuiODwdQLdCA4aVGTXqkGzhiD44OVxr85MeoJ5AMTnnea9SnJ3jp9GAQ5riXA5g==",
       "dependencies": [
         "@opencode-ai/sdk",
-        "zod"
+        "zod@4.1.8"
       ]
     },
-    "@opencode-ai/sdk@1.1.59": {
-      "integrity": "sha512-g+Z0UQ9qNUcZsX4m/fXG4MHIquYlp4d2wfelRsynMj+AprfZ4He6u9GxAVT0FmLxuutj2ZxTLlspSe1+256pxg=="
+    "@opencode-ai/sdk@1.2.10": {
+      "integrity": "sha512-SyXcVqry2hitPVvQtvXOhqsWyFhSycG/+LTLYXrcq8AFmd9FR7dyBSDB3f5Ol6IPkYOegk8P2Eg2kKPNSNiKGw=="
     },
     "zod@4.1.8": {
       "integrity": "sha512-5R1P+WwQqmmMIEACyzSvo4JXHY5WiAFHRMg+zBZKgKS+Q1viRa0C1hmUKtHltoIFKtIdki3pRxkmpP74jnNYHQ=="
+    },
+    "zod@4.3.6": {
+      "integrity": "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="
     }
   },
   "workspace": {
@@ -72,7 +75,7 @@
       "jsr:@std/assert@^1.0.13",
       "jsr:@std/testing@^1.0.15",
       "npm:@opencode-ai/plugin@*",
-      "npm:zod@^4.0.14"
+      "npm:zod@^4.3.6"
     ]
   }
 }

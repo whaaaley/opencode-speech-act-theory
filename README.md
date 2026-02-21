@@ -165,8 +165,8 @@ src/
   discover.ts      — Reads opencode.json, resolves globs, reads files
   schema.ts        — Zod schemas for parsed rules and responses
   prompt.ts        — Prompt builders for parse, format, and retry
-  compare.ts       — Byte size comparison and table formatting
   utils/
+    compare.ts     — Byte size comparison and table formatting
     safe.ts        — safe() and safeAsync() error wrappers
     validate.ts    — JSON parsing and Zod schema validation
     stripCodeFences.ts  — Strips markdown code fences from LLM output
