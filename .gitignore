@@ -2,5 +2,6 @@
 .trash/
 dist/
 fixtures/onclick/
+node_modules/
 .env
 irf.code-workspace

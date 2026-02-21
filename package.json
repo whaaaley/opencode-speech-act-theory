@@ -1,0 +1,12 @@
+{
+  "name": "opencode-irf",
+  "version": "0.0.1",
+  "description": "OpenCode plugin that converts unstructured instructions into structured rules using speech act theory and deontic logic",
+  "repository": "https://github.com/whaaaley/irf",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "keywords": ["opencode", "opencode-plugin", "irf", "rules", "instructions"],
+  "dependencies": {
+    "@opencode-ai/plugin": "*"
+  }
+}

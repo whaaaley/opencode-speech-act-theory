@@ -3,11 +3,9 @@ let
   nixpkgs = import tarball {};
 in with nixpkgs; mkShell {
   buildInputs = [
+    bun
     deno
-    lazygit
-    nodejs_22
-    tmux
-    xclip
+    nodejs_24
   ];
 
   shellHook = ''
