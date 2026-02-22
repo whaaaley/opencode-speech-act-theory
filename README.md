@@ -11,7 +11,7 @@ Once installed, just tell OpenCode what you want:
 ```
 Use IRF to rewrite my instruction files
 Rewrite instructions.md with IRF in verbose mode
-Use IRF to reformat docs/rules.md, concise
+Use IRF to add a rule about using early returns
 ```
 
 ## Overview
@@ -83,6 +83,10 @@ The `irf-rewrite` tool reads the `instructions` array from your project's `openc
 }
 ```
 
+### irf-rewrite
+
+Rewrites all matched instruction files through the parse/format pipeline.
+
 ```
 irf-rewrite                                    # discover from opencode.json, balanced mode
 irf-rewrite --mode concise                     # discover, concise output
@@ -90,12 +94,26 @@ irf-rewrite --files fixtures/testing.md        # single file, balanced mode
 irf-rewrite --files a.md,b.md --mode verbose   # multiple files, verbose output
 ```
 
-### Parameters
-
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `mode` | string | No | Output format: verbose, balanced, or concise (default: balanced) |
 | `files` | string | No | Comma-separated file paths to process instead of discovering from opencode.json |
+
+### irf-add
+
+Appends new rules to the end of an instruction file without rewriting existing content.
+
+```
+irf-add --input "Always use early returns"     # append to first discovered file, balanced mode
+irf-add --input "Use early returns" --mode concise
+irf-add --input "Use early returns" --file docs/rules.md
+```
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `input` | string | Yes | Unstructured rule text to parse, format, and append |
+| `file` | string | No | Target file path (default: first discovered instruction file) |
+| `mode` | string | No | Output format: verbose, balanced, or concise (default: balanced) |
 
 ## Theoretical Foundation
 
