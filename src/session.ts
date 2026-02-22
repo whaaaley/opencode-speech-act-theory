@@ -8,12 +8,9 @@ import { formatValidationError, validateJson } from './utils/validate'
 
 const MAX_RETRIES = 3
 
-// deny SAT's own tools in internal sessions to prevent infinite recursion
+// deny all tools in internal sessions so the LLM can only respond with text
 const DENIED_TOOLS: Record<string, boolean> = {
-  'rewrite-instructions': false,
-  'add-instruction': false,
-  'automatic-rule': false,
-  'refine-prompt': false,
+  '*': false,
 }
 
 export type PromptModel = {

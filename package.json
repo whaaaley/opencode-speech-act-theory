@@ -1,6 +1,6 @@
 {
   "name": "opencode-sat",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "OpenCode plugin that converts unstructured instructions into structured rules using speech act theory and deontic logic.",
   "keywords": [
     "opencode",
