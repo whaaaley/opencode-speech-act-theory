@@ -282,7 +282,7 @@ describe('processFile', () => {
     await processFile({ file, prompt: capturingPrompt, mode: 'verbose' })
 
     // second call is the format prompt; should contain verbose-specific instructions
-    expect(prompts[1]).toContain('Every rule must include both a Rule line and a Reason line')
+    expect(prompts[1]).toContain('Always include both a Rule line and a Reason line')
 
     await rm(dir, { recursive: true, force: true })
   })
@@ -299,7 +299,7 @@ describe('processFile', () => {
     await processFile({ file, prompt: capturingPrompt, mode: 'concise' })
 
     // second call is the format prompt; should contain concise-specific instructions
-    expect(prompts[1]).toContain('Do not include reasons or justifications')
+    expect(prompts[1]).toContain('Never include reasons')
 
     await rm(dir, { recursive: true, force: true })
   })
@@ -316,7 +316,7 @@ describe('processFile', () => {
     await processFile({ file, prompt: capturingPrompt })
 
     // second call is the format prompt; should contain balanced-specific instructions
-    expect(prompts[1]).toContain('Use your judgment')
+    expect(prompts[1]).toContain('non-obvious or counterintuitive')
 
     await rm(dir, { recursive: true, force: true })
   })

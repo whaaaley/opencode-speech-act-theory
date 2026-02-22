@@ -15,9 +15,9 @@ describe('buildParsePrompt', () => {
     expect(result.includes('"reason"')).toEqual(true)
   })
 
-  it('asks for valid JSON only', () => {
+  it('asks for JSON-only response', () => {
     const result = buildParsePrompt('anything')
-    expect(result.includes('Return ONLY valid JSON')).toEqual(true)
+    expect(result.includes('Always respond with raw JSON text only')).toEqual(true)
   })
 
   it('mentions all deontic strengths', () => {
@@ -40,34 +40,33 @@ describe('buildFormatPrompt', () => {
     expect(buildFormatPrompt(json, 'concise').includes(json)).toEqual(true)
   })
 
-  it('asks for valid JSON in all modes', () => {
-    expect(buildFormatPrompt('{}', 'verbose').includes('Return ONLY valid JSON')).toEqual(true)
-    expect(buildFormatPrompt('{}', 'balanced').includes('Return ONLY valid JSON')).toEqual(true)
-    expect(buildFormatPrompt('{}', 'concise').includes('Return ONLY valid JSON')).toEqual(true)
+  it('asks for JSON-only response in all modes', () => {
+    expect(buildFormatPrompt('{}', 'verbose').includes('Always respond with raw JSON text only')).toEqual(true)
+    expect(buildFormatPrompt('{}', 'balanced').includes('Always respond with raw JSON text only')).toEqual(true)
+    expect(buildFormatPrompt('{}', 'concise').includes('Always respond with raw JSON text only')).toEqual(true)
   })
 
   it('defaults to balanced when mode is omitted', () => {
     const result = buildFormatPrompt('{}')
-    expect(result.includes('Use your judgment')).toEqual(true)
+    expect(result.includes('non-obvious or counterintuitive')).toEqual(true)
   })
 
   it('verbose mode requires both Rule and Reason for every rule', () => {
     const result = buildFormatPrompt('{}', 'verbose')
-    expect(result.includes('Every rule must include both a Rule line and a Reason line')).toEqual(true)
+    expect(result.includes('Always include both a Rule line and a Reason line')).toEqual(true)
     expect(result.includes('Rule:')).toEqual(true)
     expect(result.includes('Reason:')).toEqual(true)
   })
 
   it('balanced mode lets the LLM decide which rules need reasons', () => {
     const result = buildFormatPrompt('{}', 'balanced')
-    expect(result.includes('Use your judgment')).toEqual(true)
     expect(result.includes('non-obvious or counterintuitive')).toEqual(true)
     expect(result.includes('self-explanatory')).toEqual(true)
   })
 
   it('concise mode excludes reasons and uses bullet format', () => {
     const result = buildFormatPrompt('{}', 'concise')
-    expect(result.includes('Do not include reasons or justifications')).toEqual(true)
+    expect(result.includes('Never include reasons')).toEqual(true)
     expect(result.includes('"- ..."')).toEqual(true)
   })
 
@@ -88,13 +87,13 @@ describe('buildRetryPrompt', () => {
     expect(result.includes('Schema validation failed')).toEqual(true)
   })
 
-  it('asks for valid JSON', () => {
+  it('asks for JSON-only response', () => {
     const result = buildRetryPrompt('anything')
-    expect(result.includes('Return ONLY valid JSON')).toEqual(true)
+    expect(result.includes('raw JSON text only')).toEqual(true)
   })
 
-  it('mentions previous response was invalid', () => {
+  it('mentions invalid response', () => {
     const result = buildRetryPrompt('anything')
-    expect(result.includes('previous response was invalid')).toEqual(true)
+    expect(result.includes('Invalid response')).toEqual(true)
   })
 })
