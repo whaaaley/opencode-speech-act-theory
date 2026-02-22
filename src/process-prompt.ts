@@ -12,25 +12,34 @@ type ProcessPromptOptions = {
   prompt: PromptFn
 }
 
-type PromptResult =
-  | { status: 'success'; formatted: string; parsed: ParsedPrompt }
-  | { status: 'parseError'; error: string }
+type PromptSuccess = {
+  status: 'success'
+  formatted: string
+  parsed: ParsedPrompt
+}
+
+type PromptParseError = {
+  status: 'parseError'
+  error: string
+}
+
+type PromptResult = PromptSuccess | PromptParseError
 
 export const processPrompt = async (options: ProcessPromptOptions): Promise<PromptResult> => {
-  const { input, prompt } = options
-
-  const parsePrompt = buildPromptParsePrompt(input)
-  const parseResult = await prompt(parsePrompt, ParsedPromptSchema)
-
-  if (parseResult.error) {
-    return { status: 'parseError', error: parseResult.error }
-  }
-
+  const parsePrompt = buildPromptParsePrompt(options.input)
+  const parseResult = await options.prompt(parsePrompt, ParsedPromptSchema)
   if (!parseResult.data) {
-    return { status: 'parseError', error: 'Parse returned no data' }
+    return {
+      status: 'parseError',
+      error: parseResult.error,
+    }
   }
 
   const formatted = formatPrompt(parseResult.data)
 
-  return { status: 'success', formatted, parsed: parseResult.data }
+  return {
+    status: 'success',
+    formatted,
+    parsed: parseResult.data,
+  }
 }

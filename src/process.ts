@@ -34,35 +34,35 @@ type ProcessFileOptions = {
 
 // process a single instruction file through the parse -> format -> write pipeline
 export const processFile = async (options: ProcessFileOptions): Promise<FileResult> => {
-  const { file, prompt, mode = 'balanced' } = options
+  const mode = options.mode ?? 'balanced'
 
   // skip files that failed to read
-  if (file.error) {
+  if (options.file.error) {
     return {
       status: 'readError',
-      path: file.path,
-      error: file.error,
+      path: options.file.path,
+      error: options.file.error,
     }
   }
 
   // step 1: parse instruction text -> structured rules
-  const parseResult = await prompt(buildParsePrompt(file.content), ParseResponseSchema)
+  const parseResult = await options.prompt(buildParsePrompt(options.file.content), ParseResponseSchema)
 
   if (parseResult.error !== null) {
     return {
       status: 'parseError',
-      path: file.path,
+      path: options.file.path,
       error: String(parseResult.error),
     }
   }
 
   // step 2: format structured rules -> human-readable rules
-  const formatResult = await prompt(buildFormatPrompt(JSON.stringify(parseResult.data), mode), FormatResponseSchema)
+  const formatResult = await options.prompt(buildFormatPrompt(JSON.stringify(parseResult.data), mode), FormatResponseSchema)
 
   if (formatResult.error !== null) {
     return {
       status: 'formatError',
-      path: file.path,
+      path: options.file.path,
       error: String(formatResult.error),
     }
   }
@@ -71,19 +71,19 @@ export const processFile = async (options: ProcessFileOptions): Promise<FileResu
   const formattedRules = formatResult.data.rules
   const joiner = mode === 'concise' ? '\n' : '\n\n'
   const content = formattedRules.join(joiner) + '\n'
-  const { error: writeError } = await safeAsync(() => writeFile(file.path, content, 'utf-8'))
-  if (writeError) {
+  const writeResult = await safeAsync(() => writeFile(options.file.path, content, 'utf-8'))
+  if (writeResult.error) {
     return {
       status: 'writeError',
-      path: file.path,
-      error: writeError.message,
+      path: options.file.path,
+      error: writeResult.error.message,
     }
   }
 
-  const comparison = compareBytes(basename(file.path), file.content, content)
+  const comparison = compareBytes(basename(options.file.path), options.file.content, content)
   return {
     status: 'success',
-    path: file.path,
+    path: options.file.path,
     rulesCount: formattedRules.length,
     comparison,
   }

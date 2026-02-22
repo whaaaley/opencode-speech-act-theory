@@ -43,9 +43,18 @@ const toTableRow = (result: FileResult): TableRow => {
   }
 }
 
-type CreateSessionResult =
-  | { ok: true; sessionId: string; prompt: PromptFn }
-  | { ok: false; error: string }
+type CreateSessionSuccess = {
+  ok: true
+  sessionId: string
+  prompt: PromptFn
+}
+
+type CreateSessionError = {
+  ok: false
+  error: string
+}
+
+type CreateSessionResult = CreateSessionSuccess | CreateSessionError
 
 type CreateSessionOptions = {
   client: Client
@@ -55,23 +64,27 @@ type CreateSessionOptions = {
 }
 
 const createSession = async (options: CreateSessionOptions): Promise<CreateSessionResult> => {
-  const { client, sessionID, title, toolName } = options
-
-  const model = await detectModel(client, sessionID)
+  const model = await detectModel(options.client, options.sessionID)
   if (!model) {
-    return { ok: false, error: 'Could not detect current model. Send a message first, then call ' + toolName + '.' }
+    return {
+      ok: false,
+      error: 'Could not detect current model. Send a message first, then call ' + options.toolName + '.',
+    }
   }
 
-  const sessionResult = await client.session.create({ body: { title } })
+  const sessionResult = await options.client.session.create({ body: { title: options.title } })
   if (!sessionResult.data) {
-    return { ok: false, error: 'Failed to create internal session' }
+    return {
+      ok: false,
+      error: 'Failed to create internal session',
+    }
   }
 
   const sessionId = sessionResult.data.id
 
   const prompt: PromptFn = (text, schema) => (
     promptWithRetry({
-      client,
+      client: options.client,
       sessionId,
       initialPrompt: text,
       schema,
@@ -79,7 +92,11 @@ const createSession = async (options: CreateSessionOptions): Promise<CreateSessi
     })
   )
 
-  return { ok: true, sessionId, prompt }
+  return {
+    ok: true,
+    sessionId,
+    prompt,
+  }
 }
 
 type RewriteToolOptions = {
@@ -88,11 +105,8 @@ type RewriteToolOptions = {
 }
 
 export const createRewriteTool = (options: RewriteToolOptions) => {
-  const { description, deps } = options
-  const { directory, client } = deps
-
   return tool({
-    description,
+    description: options.description,
     args: {
       mode: tool.schema.string().optional().describe(
         'Output format: verbose, balanced, or concise (default: balanced)',
@@ -105,13 +119,13 @@ export const createRewriteTool = (options: RewriteToolOptions) => {
       const mode = isFormatMode(args.mode) ? args.mode : 'balanced'
 
       try {
-        const resolved = await resolveFiles(directory, args.files)
+        const resolved = await resolveFiles(options.deps.directory, args.files)
         if (resolved.error !== null) {
           return resolved.error
         }
 
         const session = await createSession({
-          client,
+          client: options.deps.client,
           sessionID: context.sessionID,
           title: 'SAT Rewrite',
           toolName: 'rewrite-instructions',
@@ -127,16 +141,22 @@ export const createRewriteTool = (options: RewriteToolOptions) => {
             break
           }
 
-          fileResults.push(await processFile({ file, prompt: session.prompt, mode }))
+          fileResults.push(await processFile({
+            file,
+            prompt: session.prompt,
+            mode,
+          }))
         }
 
-        await safeAsync(() => client.session.delete({ path: { id: session.sessionId } }))
+        await safeAsync(() => options.deps.client.session.delete({
+          path: { id: session.sessionId },
+        }))
 
         const table = buildTable(fileResults.map(toTableRow))
 
         if (table.length > 0) {
           await sendResult({
-            client,
+            client: options.deps.client,
             sessionID: context.sessionID,
             text: table,
           })
@@ -162,11 +182,8 @@ type AppendToolOptions = {
 }
 
 export const createAppendTool = (options: AppendToolOptions) => {
-  const { description, deps, toolName, sessionTitle, defaultMode, successPrefix, hasMode } = options
-  const { directory, client } = deps
-
   return tool({
-    description,
+    description: options.description,
     args: {
       input: tool.schema.string().describe(
         'Unstructured text describing the rule(s) to add',
@@ -174,7 +191,7 @@ export const createAppendTool = (options: AppendToolOptions) => {
       file: tool.schema.string().optional().describe(
         'File path to append to. If omitted, uses the first discovered instruction file.',
       ),
-      ...(hasMode
+      ...(options.hasMode
         ? {
           mode: tool.schema.string().optional().describe(
             'Output format: verbose, balanced, or concise (default: balanced)',
@@ -183,13 +200,13 @@ export const createAppendTool = (options: AppendToolOptions) => {
         : {}),
     },
     async execute(args, context) {
-      const mode: FormatMode = hasMode && isFormatMode(args.mode) ? args.mode : defaultMode
+      const mode: FormatMode = options.hasMode && isFormatMode(args.mode) ? args.mode : options.defaultMode
 
       try {
         let filePath = args.file
 
         if (!filePath) {
-          const resolved = await resolveFiles(directory)
+          const resolved = await resolveFiles(options.deps.directory)
           if (resolved.error !== null) {
             return resolved.error
           }
@@ -203,10 +220,10 @@ export const createAppendTool = (options: AppendToolOptions) => {
         }
 
         const session = await createSession({
-          client,
+          client: options.deps.client,
           sessionID: context.sessionID,
-          title: sessionTitle,
-          toolName,
+          title: options.sessionTitle,
+          toolName: options.toolName,
         })
         if (!session.ok) {
           return session.error
@@ -215,21 +232,23 @@ export const createAppendTool = (options: AppendToolOptions) => {
         const result = await appendRules({
           input: args.input,
           filePath,
-          directory,
+          directory: options.deps.directory,
           prompt: session.prompt,
           mode,
         })
 
-        await safeAsync(() => client.session.delete({ path: { id: session.sessionId } }))
+        await safeAsync(() => options.deps.client.session.delete({
+          path: { id: session.sessionId },
+        }))
 
         if (result.status !== 'success') {
           return result.status + ': ' + result.error
         }
 
-        const msg = successPrefix + result.rulesCount + ' rule(s) to ' + result.path
+        const msg = options.successPrefix + result.rulesCount + ' rule(s) to ' + result.path
 
         await sendResult({
-          client,
+          client: options.deps.client,
           sessionID: context.sessionID,
           text: msg,
         })
@@ -237,7 +256,7 @@ export const createAppendTool = (options: AppendToolOptions) => {
         return msg
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
-        return toolName + ' error: ' + msg
+        return options.toolName + ' error: ' + msg
       }
     },
   })
@@ -249,11 +268,8 @@ type RefineToolOptions = {
 }
 
 export const createRefineTool = (options: RefineToolOptions) => {
-  const { description, deps } = options
-  const { client } = deps
-
   return tool({
-    description,
+    description: options.description,
     args: {
       input: tool.schema.string().describe(
         'Raw unstructured user input to refine into a structured prompt',
@@ -262,7 +278,7 @@ export const createRefineTool = (options: RefineToolOptions) => {
     async execute(args, context) {
       try {
         const session = await createSession({
-          client,
+          client: options.deps.client,
           sessionID: context.sessionID,
           title: 'SAT Refine',
           toolName: 'refine-prompt',
@@ -271,16 +287,21 @@ export const createRefineTool = (options: RefineToolOptions) => {
           return session.error
         }
 
-        const result = await processPrompt({ input: args.input, prompt: session.prompt })
+        const result = await processPrompt({
+          input: args.input,
+          prompt: session.prompt,
+        })
 
-        await safeAsync(() => client.session.delete({ path: { id: session.sessionId } }))
+        await safeAsync(() => options.deps.client.session.delete({
+          path: { id: session.sessionId },
+        }))
 
         if (result.status !== 'success') {
           return 'refine-prompt parse error: ' + result.error
         }
 
         await sendResult({
-          client,
+          client: options.deps.client,
           sessionID: context.sessionID,
           text: result.formatted,
         })

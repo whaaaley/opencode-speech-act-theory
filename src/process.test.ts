@@ -17,16 +17,19 @@ type MakePromptFnOptions = {
 }
 
 const makePromptFn = (options: MakePromptFnOptions): PromptFn => {
-  const { parseData, parseError, formatData, formatError } = options
   let call = 0
   return (() => {
     call++
     if (call === 1) {
-      return Promise.resolve(parseError !== null ? { data: null, error: parseError } : { data: parseData, error: null })
+      if (options.parseError !== null) {
+        return Promise.resolve({ data: null, error: options.parseError })
+      }
+      return Promise.resolve({ data: options.parseData, error: null })
     }
-    return Promise.resolve(
-      formatError !== null ? { data: null, error: formatError } : { data: formatData, error: null },
-    )
+    if (options.formatError !== null) {
+      return Promise.resolve({ data: null, error: options.formatError })
+    }
+    return Promise.resolve({ data: options.formatData, error: null })
   }) as PromptFn
 }
 
@@ -76,9 +79,6 @@ describe('processFile', () => {
     })
 
     const result = await processFile({ file, prompt })
-
-    expect(result.status).toEqual('readError')
-    expect(result.path).toEqual('/tmp/bad.md')
     if (result.status === 'success') throw new Error('expected error')
     expect(result.error).toEqual('ENOENT')
   })

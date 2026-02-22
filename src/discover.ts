@@ -13,23 +13,23 @@ type ConfigResult = Result<string[]>
 
 const readConfig = async (directory: string): Promise<ConfigResult> => {
   const configPath = join(directory, 'opencode.json')
-  const { data, error } = await safeAsync(() => readFile(configPath, 'utf-8'))
-  if (error) {
+  const readResult = await safeAsync(() => readFile(configPath, 'utf-8'))
+  if (readResult.error) {
     return {
       data: null,
-      error: 'Could not read ' + configPath + ': ' + error.message,
+      error: 'Could not read ' + configPath + ': ' + readResult.error.message,
     }
   }
 
-  const { data: parsed, error: parseError } = safe(() => JSON.parse(data))
-  if (parseError) {
+  const parseResult = safe(() => JSON.parse(readResult.data))
+  if (parseResult.error) {
     return {
       data: null,
-      error: 'Invalid JSON in ' + configPath + ': ' + parseError.message,
+      error: 'Invalid JSON in ' + configPath + ': ' + parseResult.error.message,
     }
   }
 
-  const instructions = parsed.instructions
+  const instructions = parseResult.data.instructions
   if (!instructions || !Array.isArray(instructions) || instructions.length === 0) {
     return {
       data: null,
@@ -72,13 +72,20 @@ const readFiles = async (files: string[]) => {
   const results: InstructionFile[] = []
 
   for (const file of files) {
-    const { data, error } = await safeAsync(() => readFile(file, 'utf-8'))
-    if (error) {
-      results.push({ path: file, content: '', error: error.message })
+    const readResult = await safeAsync(() => readFile(file, 'utf-8'))
+    if (readResult.error) {
+      results.push({
+        path: file,
+        content: '',
+        error: readResult.error.message,
+      })
       continue
     }
 
-    results.push({ path: file, content: data })
+    results.push({
+      path: file,
+      content: readResult.data,
+    })
   }
 
   return results

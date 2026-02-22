@@ -20,15 +20,15 @@ type ValidateJsonSchemaError = {
 type ValidateJsonResult<T> = ValidateJsonSuccess<T> | ValidateJsonParseError | ValidateJsonSchemaError
 
 export const validateJson = <T>(json: string, schema: z.ZodType<T>): ValidateJsonResult<T> => {
-  const { data: parsed, error } = safe(() => JSON.parse(json))
-  if (error) {
+  const parseResult = safe(() => JSON.parse(json))
+  if (parseResult.error) {
     return {
       data: null,
       error: 'parse',
     }
   }
 
-  const result = schema.safeParse(parsed)
+  const result = schema.safeParse(parseResult.data)
   if (!result.success) {
     return {
       data: null,
