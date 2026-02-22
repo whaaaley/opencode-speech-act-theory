@@ -3,6 +3,7 @@
 An OpenCode plugin that converts unstructured text into structured, consistent formats using speech act theory.
 
 <img width="612" height="256" alt="image" src="https://github.com/user-attachments/assets/51edf4b5-831a-4e13-96de-8cad453ea13e" />
+<img width="478" height="607" alt="image" src="https://github.com/user-attachments/assets/a92d44b8-5d63-4ddb-ad95-f1614cc9b110" />
 
 ## Quick Start
 
