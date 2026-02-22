@@ -21,7 +21,7 @@ Rewrite my instruction files
 Add a rule about using early returns
 ```
 
-Messy or voice-transcribed input can be restructured into a clear task hierarchy using the prompt tools.
+Unstructured or voice-transcribed input can be structured into a clear task hierarchy using the prompt tools.
 
 ## Tools
 
@@ -44,7 +44,7 @@ Reads instruction files from your `opencode.json` configuration. Accepts an opti
 
 #### parse-rules
 
-Parses instruction file content or unstructured user input into structured rules JSON. Validates the parsed rules against the schema and returns validated JSON. Call after `discover-rules` and before `format-rules`.
+Structures instruction file content or user input into validated rules JSON. The LLM decomposes the input into rule objects, the tool validates the structure. Call after `discover-rules` and before `format-rules`.
 
 #### format-rules
 
@@ -106,7 +106,7 @@ Reason: Arrow functions provide lexical this binding and a more compact syntax.
 
 ### Prompt Pipeline
 
-Restructures messy or unstructured user input into a clear task hierarchy.
+Structures unstructured or voice-transcribed user input into a clear task hierarchy.
 
 ```
 parse-prompt -> format-prompt
@@ -114,7 +114,7 @@ parse-prompt -> format-prompt
 
 #### parse-prompt
 
-Decomposes raw text (often from voice transcription) into structured tasks with intent, targets, constraints, context, and recursive subtasks. Validates against the schema and returns validated JSON.
+Structures user input into a validated task hierarchy. The LLM decomposes the input into tasks, the tool validates the structure.
 
 #### format-prompt
 
@@ -156,7 +156,7 @@ The plugin is built on [speech act theory](https://en.wikipedia.org/wiki/Speech_
 
 Rules constrain ongoing behavior. They are standing obligations, prohibitions, and permissions that persist across all future actions. The formal framework is [deontic logic](https://en.wikipedia.org/wiki/Deontic_logic): what is obligatory, forbidden, and permissible.
 
-The plugin parses unstructured rule text into structured components:
+The LLM structures rule text into components, and the plugin validates:
 
 ```ts
 type ParsedRule = {
