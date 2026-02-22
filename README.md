@@ -1,4 +1,4 @@
-# OpenCode SAT (Speech Act Theory)
+# OpenCode Speech Act Theory
 
 An OpenCode plugin that converts unstructured text into structured, consistent formats using speech act theory.
 
@@ -10,7 +10,7 @@ Add the plugin to your `opencode.json` and restart OpenCode:
 
 ```json
 {
-  "plugin": ["opencode-sat"]
+  "plugin": ["opencode-speech-act-theory"]
 }
 ```
 
@@ -35,7 +35,7 @@ Discovers, parses, formats, and writes instruction rules. The LLM drives each st
 
 ```
 discover-rules -> parse-rules -> format-rules -> rewrite-rules
-                                               -> add-rules
+                                              -> add-rules
 ```
 
 #### discover-rules

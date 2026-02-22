@@ -1,6 +1,6 @@
 {
-  "name": "opencode-sat",
-  "version": "0.0.16",
+  "name": "opencode-speech-act-theory",
+  "version": "0.0.17",
   "description": "OpenCode plugin that converts unstructured instructions into structured rules using speech act theory and deontic logic.",
   "keywords": [
     "opencode",
@@ -12,13 +12,13 @@
     "speech-act-theory",
     "deontic-logic"
   ],
-  "homepage": "https://github.com/whaaaley/opencode-sat#readme",
+  "homepage": "https://github.com/whaaaley/opencode-speech-act-theory#readme",
   "bugs": {
-    "url": "https://github.com/whaaaley/opencode-sat/issues"
+    "url": "https://github.com/whaaaley/opencode-speech-act-theory/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/whaaaley/opencode-sat.git"
+    "url": "git+https://github.com/whaaaley/opencode-speech-act-theory.git"
   },
   "license": "MIT",
   "author": "Dustin Dowell",
