@@ -1,11 +1,13 @@
+import type { PluginInput } from '@opencode-ai/plugin'
 import { tool } from '@opencode-ai/plugin'
 import { appendRules } from '../append.ts'
 import { buildTable, toTableRow } from '../compare.ts'
+import { sendResult } from '../opencode/notify.ts'
 import { resolveFiles } from '../resolve.ts'
 import { type FileResult, processFile } from '../rewrite.ts'
 import { FormatResponseSchema, ParseResponseSchema } from '../rule-schema.ts'
 import { formatValidationError, validateJson } from '../validate.ts'
-import { FORMAT_RULES_DESC, MODE_DESC, PARSE_RULES_DESC } from './descriptions.ts'
+import { FORMAT_RULES_PARAM, MODE_PARAM, PARSE_RULES_PARAM } from './descriptions.ts'
 
 // discover-rules
 
@@ -65,7 +67,7 @@ export const createParseRulesTool = (options: ParseRulesToolOptions) => {
   return tool({
     description: options.description,
     args: {
-      rules: tool.schema.string().describe(PARSE_RULES_DESC),
+      rules: tool.schema.string().describe(PARSE_RULES_PARAM),
     },
     async execute(args) {
       const validated = validateJson(args.rules, ParseResponseSchema)
@@ -88,8 +90,8 @@ export const createFormatRulesTool = (options: FormatRulesToolOptions) => {
   return tool({
     description: options.description,
     args: {
-      rules: tool.schema.string().describe(FORMAT_RULES_DESC),
-      mode: tool.schema.string().optional().describe(MODE_DESC),
+      rules: tool.schema.string().describe(FORMAT_RULES_PARAM),
+      mode: tool.schema.string().optional().describe(MODE_PARAM),
     },
     async execute(args) {
       const validated = validateJson(args.rules, FormatResponseSchema)
@@ -102,22 +104,24 @@ export const createFormatRulesTool = (options: FormatRulesToolOptions) => {
   })
 }
 
-// rewrite-rules
+// rewrite-rules / add-rules
 
-type RewriteToolOptions = {
+type WriteToolOptions = {
+  client: PluginInput['client']
   description: string
   directory: string
   discovered: Set<string>
 }
 
-export const createRewriteTool = (options: RewriteToolOptions) => {
+export const createRewriteTool = (options: WriteToolOptions) => {
   return tool({
     description: options.description,
     args: {
-      rules: tool.schema.string().describe(FORMAT_RULES_DESC),
-      files: tool.schema.string().optional()
-        .describe('Comma-separated file paths to process instead of discovering from opencode.json'),
-      mode: tool.schema.string().optional().describe(MODE_DESC),
+      rules: tool.schema.string().describe(FORMAT_RULES_PARAM),
+      files: tool.schema.string().optional().describe(
+        'Comma-separated file paths to process instead of discovering from opencode.json',
+      ),
+      mode: tool.schema.string().optional().describe(MODE_PARAM),
     },
     async execute(args, context) {
       if (options.discovered.size === 0) {
@@ -149,29 +153,32 @@ export const createRewriteTool = (options: RewriteToolOptions) => {
         )
       }
 
-      return buildTable(fileResults.map(toTableRow))
+      const table = buildTable(fileResults.map(toTableRow))
+
+      await sendResult({
+        client: options.client,
+        sessionID: context.sessionID,
+        text: table,
+      })
+
+      return 'Rewrote ' + fileResults.length + ' file(s). Results displayed in chat.'
     },
   })
 }
 
 // add-rules
 
-type AddToolOptions = {
-  description: string
-  directory: string
-  discovered: Set<string>
-}
-
-export const createAddTool = (options: AddToolOptions) => {
+export const createAddTool = (options: WriteToolOptions) => {
   return tool({
     description: options.description,
     args: {
-      rules: tool.schema.string().describe(FORMAT_RULES_DESC),
-      file: tool.schema.string().optional()
-        .describe('File path to append to. If omitted, uses the first discovered instruction file.'),
-      mode: tool.schema.string().optional().describe(MODE_DESC),
+      rules: tool.schema.string().describe(FORMAT_RULES_PARAM),
+      file: tool.schema.string().optional().describe(
+        'File path to append to. If omitted, uses the first discovered instruction file.',
+      ),
+      mode: tool.schema.string().optional().describe(MODE_PARAM),
     },
-    async execute(args) {
+    async execute(args, context) {
       if (options.discovered.size === 0) {
         return 'Call discover-rules first to read the instruction files before adding.'
       }
@@ -206,7 +213,15 @@ export const createAddTool = (options: AddToolOptions) => {
         return result.status + ': ' + result.error
       }
 
-      return 'Added ' + result.rulesCount + ' rule(s) to ' + result.path
+      const message = 'Added ' + result.rulesCount + ' rule(s) to ' + result.path
+
+      await sendResult({
+        client: options.client,
+        sessionID: context.sessionID,
+        text: message,
+      })
+
+      return 'Added ' + result.rulesCount + ' rule(s). Results displayed in chat.'
     },
   })
 }

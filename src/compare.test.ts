@@ -191,7 +191,7 @@ describe('buildTable', () => {
       status: 'Parse failed',
     }]
 
-    console.log('\n' + buildTable(rows))
-    expect(true).toEqual(true)
+    const table = buildTable(rows)
+    expect(table.length).toBeGreaterThan(0)
   })
 })

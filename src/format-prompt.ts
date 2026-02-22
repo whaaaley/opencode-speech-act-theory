@@ -135,10 +135,15 @@ export const formatPrompt = (parsed: ParsedPrompt): string => {
   }
 
   const flat = flatten(nodes)
+  const first = flat[0]
+
+  if (!first) {
+    return ''
+  }
 
   const root: TreeNode = {
-    label: flat[0]?.label ?? '',
-    metaLines: flat[0]?.metaLines ?? [],
+    label: first.label,
+    metaLines: first.metaLines,
     children: flat.slice(1),
   }
 

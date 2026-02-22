@@ -25,10 +25,6 @@ export const ParsedPromptSchema = z.object({
   tasks: z.array(ParsedTaskSchema),
 })
 
-export const FormattedPromptSchema = z.object({
-  prompt: z.string().describe('Human-readable restructured prompt'),
-})
-
 export type ParsedTask = {
   intent: string
   targets: Array<string>

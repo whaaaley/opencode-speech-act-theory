@@ -48,8 +48,11 @@ describe('resolveFiles', () => {
     expect(result.error).toBeNull()
     expect(result.data).not.toBeNull()
     expect(result.data).toHaveLength(1)
-    expect(result.data![0]!.path).toContain('rules.md')
-    expect(result.data![0]!.content).toContain('Rule: test')
+
+    const file = result.data?.[0]
+    expect(file).toBeDefined()
+    expect(file?.path).toContain('rules.md')
+    expect(file?.content).toContain('Rule: test')
 
     await cleanup()
   })
@@ -91,8 +94,13 @@ describe('resolveFiles', () => {
 
     expect(result.error).toBeNull()
     expect(result.data).not.toBeNull()
-    expect(result.data!.length).toBeGreaterThan(0)
-    expect(result.data![0]!.content).toContain('Rule: discovered')
+
+    const files = result.data ?? []
+    expect(files.length).toBeGreaterThan(0)
+
+    const file = files[0]
+    expect(file).toBeDefined()
+    expect(file?.content).toContain('Rule: discovered')
 
     await cleanup()
   })
@@ -115,7 +123,10 @@ describe('resolveFiles', () => {
 
     expect(result.error).toBeNull()
     expect(result.data).toHaveLength(1)
-    expect(result.data![0]!.error).toBeDefined()
+
+    const file = result.data?.[0]
+    expect(file).toBeDefined()
+    expect(file?.error).toBeDefined()
 
     await cleanup()
   })

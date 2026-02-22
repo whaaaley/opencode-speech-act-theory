@@ -1,5 +1,5 @@
 import type { z } from 'zod'
-import { safe } from './safe'
+import { safe } from './safe.ts'
 
 type ValidateJsonSuccess<T> = {
   data: T

@@ -8,8 +8,15 @@ const RULE_A =
   'Rule: use consistent whitespace for readability in all source files\nReason: Whitespace is critical for readability.'
 const RULE_B = 'Rule: do not use non-null assertions in TypeScript files\nReason: Use narrowing type guards instead.'
 
+type SuccessResult = Extract<AppendResult, { status: 'success' }>
+
 const expectStatus = (result: AppendResult, expected: AppendResult['status']) => {
   expect(result.status).toBe(expected)
+}
+
+const expectSuccess = (result: AppendResult): SuccessResult => {
+  expect(result.status).toBe('success')
+  return result as SuccessResult
 }
 
 describe('appendRules', () => {
@@ -130,9 +137,8 @@ describe('appendRules', () => {
     })
 
     expectStatus(result, 'success')
-    if (result.status === 'success') {
-      expect(result.rulesCount).toBe(2)
-    }
+    const success = expectSuccess(result)
+    expect(success.rulesCount).toBe(2)
 
     await cleanup()
   })

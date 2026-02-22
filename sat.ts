@@ -1,4 +1,5 @@
 import type { Plugin } from '@opencode-ai/plugin'
+import { DEONTIC_STRENGTHS, MODE_FORMATS, NEGATION_SIGNALS } from './src/tools/descriptions.ts'
 import { createFormatPromptTool, createParsePromptTool } from './src/tools/prompts.ts'
 import {
   createAddTool,
@@ -8,7 +9,7 @@ import {
   createRewriteTool,
 } from './src/tools/rules.ts'
 
-const plugin: Plugin = async ({ directory }) => {
+const plugin: Plugin = async ({ directory, client }) => {
   const discovered = new Set<string>()
 
   return {
@@ -29,6 +30,15 @@ const plugin: Plugin = async ({ directory }) => {
           '- The rules parameter is required and must be a JSON string matching the schema described in the parameter.',
           '- Validates the parsed rules against the schema and returns the validated JSON.',
           '- Call this tool AFTER discover-rules and BEFORE format-rules.',
+          '',
+          'Extract each rule into: strength, action (verb), target (object), context (optional condition), reason.',
+          'Each parsed rule must correspond to the original instruction without adding extra details.',
+          '',
+          'Detect deontic strength from input signals:',
+          NEGATION_SIGNALS,
+          '',
+          'Strength determines enforcement:',
+          DEONTIC_STRENGTHS,
         ].join('\n'),
       }),
 
@@ -38,15 +48,25 @@ const plugin: Plugin = async ({ directory }) => {
           '- Express deontic strength naturally: obligatory as positive imperative, forbidden as negated imperative (do not), permissible as "may".',
           '- Optionally accept a mode parameter (verbose, balanced, or concise) to control formatting.',
           '- Default to balanced mode when no mode is specified.',
-          '- For verbose and balanced modes, each rule string must include "Rule: " prefix and "\\nReason: " suffix.',
-          '- For concise mode, use "- " prefix with directive only, no reasons.',
           '- The rules parameter is required and must be a JSON string matching the schema described in the parameter.',
           '- Validates the formatted rules and returns the validated JSON.',
           '- Call this tool AFTER parse-rules and BEFORE rewrite-rules or add-rules.',
+          '',
+          'Strength determines how the rule is expressed:',
+          DEONTIC_STRENGTHS,
+          '',
+          'CRITICAL: forbidden + action "use" MUST produce "do not use ...", never "use ...".',
+          '',
+          'Output format per mode:',
+          MODE_FORMATS,
+          '',
+          'For verbose and balanced modes, each rule string must include "Rule: " prefix and "\\nReason: " suffix.',
+          'For concise mode, use "- " prefix with directive only, no reasons.',
         ].join('\n'),
       }),
 
       'rewrite-rules': createRewriteTool({
+        client,
         directory,
         discovered,
         description: [
@@ -60,6 +80,7 @@ const plugin: Plugin = async ({ directory }) => {
       }),
 
       'add-rules': createAddTool({
+        client,
         directory,
         discovered,
         description: [
@@ -83,6 +104,7 @@ const plugin: Plugin = async ({ directory }) => {
       }),
 
       'format-prompt': createFormatPromptTool({
+        client,
         description: [
           '- Render validated tasks from parse-prompt into a formatted markdown tree view.',
           '- The tasks parameter is required and must be a JSON string matching the schema described in the parameter.',

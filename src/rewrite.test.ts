@@ -14,8 +14,21 @@ const RULE_B = [
   'Reason: Use narrowing type guards instead.',
 ].join('\n')
 
+type ReadErrorResult = Extract<FileResult, { status: 'readError' | 'writeError' }>
+type SuccessResult = Extract<FileResult, { status: 'success' }>
+
 const expectStatus = (result: FileResult, expected: FileResult['status']) => {
   expect(result.status).toBe(expected)
+}
+
+const expectReadError = (result: FileResult): ReadErrorResult => {
+  expect(result.status).toBe('readError')
+  return result as ReadErrorResult
+}
+
+const expectSuccess = (result: FileResult): SuccessResult => {
+  expect(result.status).toBe('success')
+  return result as SuccessResult
 }
 
 describe('processFile', () => {
@@ -41,9 +54,8 @@ describe('processFile', () => {
     })
 
     expectStatus(result, 'readError')
-    if (result.status === 'readError') {
-      expect(result.error).toBe('ENOENT')
-    }
+    const error = expectReadError(result)
+    expect(error.error).toBe('ENOENT')
 
     await cleanup()
   })
@@ -75,10 +87,9 @@ describe('processFile', () => {
     })
 
     expectStatus(result, 'success')
-    if (result.status === 'success') {
-      expect(result.comparison).toBeDefined()
-      expect(result.rulesCount).toBe(1)
-    }
+    const success = expectSuccess(result)
+    expect(success.comparison).toBeDefined()
+    expect(success.rulesCount).toBe(1)
 
     await cleanup()
   })

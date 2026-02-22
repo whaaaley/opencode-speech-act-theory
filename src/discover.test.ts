@@ -36,7 +36,7 @@ describe('discover', () => {
 
     expect(result.data).toEqual(null)
     expect(result.error).not.toEqual(null)
-    expect(result.error !== null && result.error.includes('Could not read')).toEqual(true)
+    expect(result.error).toContain('Could not read')
   })
 
   it('returns error when instructions array is missing', async () => {
@@ -46,7 +46,7 @@ describe('discover', () => {
 
     expect(result.data).toEqual(null)
     expect(result.error).not.toEqual(null)
-    expect(result.error !== null && result.error.includes('No "instructions" array')).toEqual(true)
+    expect(result.error).toContain('No "instructions" array')
   })
 
   it('returns error when instructions array is empty', async () => {
@@ -56,7 +56,7 @@ describe('discover', () => {
 
     expect(result.data).toEqual(null)
     expect(result.error).not.toEqual(null)
-    expect(result.error !== null && result.error.includes('No "instructions" array')).toEqual(true)
+    expect(result.error).toContain('No "instructions" array')
   })
 
   it('returns error when no files match patterns', async () => {
@@ -66,7 +66,7 @@ describe('discover', () => {
 
     expect(result.data).toEqual(null)
     expect(result.error).not.toEqual(null)
-    expect(result.error !== null && result.error.includes('No instruction files found matching')).toEqual(true)
+    expect(result.error).toContain('No instruction files found matching')
   })
 
   it('discovers files matching a single glob pattern', async () => {
@@ -77,9 +77,9 @@ describe('discover', () => {
 
     expect(result.error).toEqual(null)
     expect(result.data).not.toEqual(null)
-    expect(result.data !== null && result.data.length).toEqual(1)
-    expect(result.data !== null && result.data[0].path).toEqual(join(dir, 'docs/rules.md'))
-    expect(result.data !== null && result.data[0].content).toEqual('rule content')
+    expect(result.data).toHaveLength(1)
+    expect(result.data?.[0]?.path).toEqual(join(dir, 'docs/rules.md'))
+    expect(result.data?.[0]?.content).toEqual('rule content')
   })
 
   it('discovers files matching multiple glob patterns', async () => {
@@ -91,13 +91,11 @@ describe('discover', () => {
 
     expect(result.error).toEqual(null)
     expect(result.data).not.toEqual(null)
-    expect(result.data !== null && result.data.length).toEqual(2)
+    expect(result.data).toHaveLength(2)
 
-    if (result.data) {
-      const paths = result.data.map((f) => f.path)
-      expect(paths.includes(join(dir, 'docs/a.md'))).toEqual(true)
-      expect(paths.includes(join(dir, 'agents/b.md'))).toEqual(true)
-    }
+    const paths = result.data?.map((f) => f.path) ?? []
+    expect(paths).toContain(join(dir, 'docs/a.md'))
+    expect(paths).toContain(join(dir, 'agents/b.md'))
   })
 
   it('deduplicates files matched by overlapping patterns', async () => {
@@ -108,7 +106,7 @@ describe('discover', () => {
 
     expect(result.error).toEqual(null)
     expect(result.data).not.toEqual(null)
-    expect(result.data !== null && result.data.length).toEqual(1)
+    expect(result.data).toHaveLength(1)
   })
 
   it('reads file content correctly', async () => {
@@ -120,7 +118,7 @@ describe('discover', () => {
 
     expect(result.error).toEqual(null)
     expect(result.data).not.toEqual(null)
-    expect(result.data !== null && result.data[0].content).toEqual(content)
+    expect(result.data?.[0]?.content).toEqual(content)
   })
 
   it('returns error content for unreadable files', async () => {
@@ -133,14 +131,12 @@ describe('discover', () => {
 
     expect(result.error).toEqual(null)
     expect(result.data).not.toEqual(null)
-    expect(result.data !== null && result.data.length).toEqual(2)
+    expect(result.data).toHaveLength(2)
 
-    if (result.data) {
-      const bad = result.data.find((f) => f.path.includes('bad.md'))
-      expect(bad).not.toEqual(undefined)
-      expect(bad !== undefined && bad.error !== undefined).toEqual(true)
-      expect(bad !== undefined && bad.content).toEqual('')
-    }
+    const bad = result.data?.find((f) => f.path.includes('bad.md'))
+    expect(bad).not.toEqual(undefined)
+    expect(bad?.error).toBeDefined()
+    expect(bad?.content).toEqual('')
   })
 
   it('returns error for invalid JSON in opencode.json', async () => {
@@ -150,7 +146,7 @@ describe('discover', () => {
 
     expect(result.data).toEqual(null)
     expect(result.error).not.toEqual(null)
-    expect(result.error !== null && result.error.includes('Invalid JSON')).toEqual(true)
+    expect(result.error).toContain('Invalid JSON')
   })
 
   it('filters out non-string entries in instructions', async () => {
@@ -162,7 +158,7 @@ describe('discover', () => {
 
     expect(result.error).toEqual(null)
     expect(result.data).not.toEqual(null)
-    expect(result.data !== null && result.data.length).toEqual(2)
+    expect(result.data).toHaveLength(2)
   })
 })
 

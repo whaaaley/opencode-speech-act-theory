@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import {
   ConstraintsSchema,
-  FormattedPromptSchema,
   IntentSchema,
   ParsedPromptSchema,
   ParsedTaskSchema,
@@ -128,9 +127,15 @@ describe('ParsedTaskSchema', () => {
     })
 
     expect(result.subtasks.length).toBe(1)
-    expect(result.subtasks[0]!.intent).toBe('Add guards to providers')
-    expect(result.subtasks[0]!.subtasks.length).toBe(1)
-    expect(result.subtasks[0]!.subtasks[0]!.intent).toBe('Validate bsky responses')
+
+    const first = result.subtasks[0]
+    expect(first).toBeDefined()
+    expect(first?.intent).toBe('Add guards to providers')
+    expect(first?.subtasks.length).toBe(1)
+
+    const nested = first?.subtasks[0]
+    expect(nested).toBeDefined()
+    expect(nested?.intent).toBe('Validate bsky responses')
   })
 
   it('rejects missing intent', () => {
@@ -172,16 +177,5 @@ describe('ParsedPromptSchema', () => {
 
   it('rejects tasks as a string', () => {
     expect(() => ParsedPromptSchema.parse({ tasks: 'not an array' })).toThrow()
-  })
-})
-
-describe('FormattedPromptSchema', () => {
-  it('parses a formatted prompt', () => {
-    const result = FormattedPromptSchema.parse({ prompt: '1. Add guards' })
-    expect(result.prompt).toBe('1. Add guards')
-  })
-
-  it('rejects missing prompt field', () => {
-    expect(() => FormattedPromptSchema.parse({})).toThrow()
   })
 })

@@ -30,7 +30,7 @@ const readConfig = async (directory: string): Promise<ConfigResult> => {
   }
 
   const instructions = parseResult.data.instructions
-  if (!instructions || !Array.isArray(instructions) || instructions.length === 0) {
+  if (!Array.isArray(instructions) || instructions.length === 0) {
     return {
       data: null,
       error: 'No "instructions" array found in ' + configPath,
@@ -51,7 +51,7 @@ const readConfig = async (directory: string): Promise<ConfigResult> => {
   }
 }
 
-const resolveFiles = async (directory: string, patterns: string[]) => {
+const matchPatterns = async (directory: string, patterns: string[]) => {
   const seen = new Set<string>()
   const files: string[] = []
 
@@ -107,7 +107,7 @@ export const discover = async (directory: string): Promise<DiscoverResult> => {
   }
 
   const patterns = config.data
-  const files = await resolveFiles(directory, patterns)
+  const files = await matchPatterns(directory, patterns)
   if (files.length === 0) {
     return {
       data: null,

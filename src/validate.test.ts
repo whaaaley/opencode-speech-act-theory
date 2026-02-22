@@ -42,9 +42,7 @@ describe('validateJson', () => {
 
     expect(result.error).toEqual('schema')
     expect(result.data).toEqual(null)
-    if (result.error === 'schema') {
-      expect(result.issues.length > 0).toEqual(true)
-    }
+    expect('issues' in result && result.issues.length > 0).toEqual(true)
   })
 
   it('accepts valid nested JSON', () => {
@@ -65,20 +63,18 @@ describe('formatValidationError', () => {
 
   it('returns formatted issues for schema errors', () => {
     const validation = validateJson('{"name": 42}', TestSchema)
-    if (validation.error === 'schema') {
-      const result = formatValidationError(validation)
+    expect(validation.error).toEqual('schema')
 
-      expect(result.includes('Schema validation failed')).toEqual(true)
-      expect(result.includes('Fix the issues')).toEqual(true)
-    }
+    const result = formatValidationError(validation as Parameters<typeof formatValidationError>[0])
+    expect(result.includes('Schema validation failed')).toEqual(true)
+    expect(result.includes('Fix the issues')).toEqual(true)
   })
 
   it('includes field paths in schema error output', () => {
     const validation = validateJson('{}', TestSchema)
-    if (validation.error === 'schema') {
-      const result = formatValidationError(validation)
+    expect(validation.error).toEqual('schema')
 
-      expect(result.includes('  - ')).toEqual(true)
-    }
+    const result = formatValidationError(validation as Parameters<typeof formatValidationError>[0])
+    expect(result.includes('  - ')).toEqual(true)
   })
 })

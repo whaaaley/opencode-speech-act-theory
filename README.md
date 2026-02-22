@@ -76,32 +76,32 @@ functions provide lexical this binding and a more compact syntax.
 
 **verbose** - Full Rule/Reason pairs for every rule.
 ```
-Rule: Always use return await when returning promises from async functions.
+Rule: Use return await when returning promises from async functions.
 Reason: Provides better stack traces and error handling.
 
 Rule: Use arrow functions as the standard function syntax.
 Reason: Arrow functions provide lexical this binding and a more compact syntax.
 
-Rule: Never use function declarations or function expressions.
+Rule: Do not use function declarations or function expressions.
 Reason: Arrow functions are the standard syntax for the project.
 ```
 
 **balanced** (default) - The LLM decides which rules need reasons.
 ```
-Rule: Always use return await when returning promises from async functions.
+Rule: Use return await when returning promises from async functions.
 Reason: Provides better stack traces and error handling.
 
 Rule: Use arrow functions as the standard function syntax.
 
-Rule: Never use function declarations or function expressions.
+Rule: Do not use function declarations or function expressions.
 Reason: Arrow functions provide lexical this binding and a more compact syntax.
 ```
 
 **concise** - Bullet list of directives only, no reasons.
 ```
-- Always use return await when returning promises from async functions.
+- Use return await when returning promises from async functions.
 - Use arrow functions as the standard function syntax.
-- Never use function declarations or function expressions.
+- Do not use function declarations or function expressions.
 ```
 
 ### Prompt Pipeline
@@ -167,6 +167,18 @@ type ParsedRule = {
   reason: string
 }
 ```
+
+The `strength` field maps to deontic operators. The critical relationship is F(A) = O(not-A): a forbidden action must be negated in expression.
+
+| Strength | Operator | Expression |
+|---|---|---|
+| obligatory | O(A) | positive imperative: "use consistent whitespace" |
+| forbidden | F(A) = O(not-A) | negate with "do not": "do not use non-null assertions" |
+| permissible | P(A) | prefix with "may": "may use type assertions when necessary" |
+| optional | P(A) and P(not-A) | prefix with "may choose to": "may choose to add commit body" |
+| supererogatory | beyond O(A) | prefix with "ideally": "ideally provide comprehensive documentation" |
+| indifferent | P(A) and P(not-A) | prefix with "either way is fine": "either way is fine for naming style" |
+| omissible | P(not-A) | prefix with "may omit": "may omit post-task explanations" |
 
 ### Prompt Formatting (action/planning logic, performative directives)
 
